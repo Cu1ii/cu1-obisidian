@@ -68,10 +68,13 @@ process_claude() {
 
 process_agents() {
     local file="AGENTS.md"
-    local AGENT_CONTENT="
-# Codex 行为准则
+	local AGENT_CONTENT="# Codex 行为准则
 - **核心原则**: 你必须严格遵守项目根目录下的 **CLAUDE.md** 文件中的所有指令与规范。
-- **规则检索**: 在执行任务前，请先完整阅读 CLAUDE.md 及其引用的 @ 规则目录。"
+- **层级约束**: 必须同时读取并遵循 **~/.CLAUDE.md** (用户级) 的约束。
+- **优先级**: 更具体的指令优先。优先级顺序为：子目录级 > 项目级 > 用户级。
+- **内容累加**: 所有层级的规则应累加贡献内容，除非发生明确冲突。
+- **目录级感知**: 仅在访问特定子目录文件时，加载该目录下的 CLAUDE.md。
+- **规则检索**: 执行任务前，请完整索引上述所有路径及引用的 @ 规则目录。"
 
     if [ ! -f "$file" ]; then
         echo -n "❓ 检测到 AGENTS.md 不存在，是否为 Codex 创建并关联 CLAUDE.md? [y/N]: "
