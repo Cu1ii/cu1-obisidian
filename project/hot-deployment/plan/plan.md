@@ -50,7 +50,137 @@
 
 ---
 
+### 2.1 系统架构图（Mermaid）
+
+```mermaid
+graph TB
+    subgraph "IDEA Plugin Layer Kotlin"
+        FL["File Listener<br/>监听 .java 保存事件"]
+        CM["Compiler Manager<br/>触发增量编译"]
+        PD["Process Detector<br/>识别 Spring Boot 进程"]
+        CCD["ClassChange Detector<br/>CRC / 时间戳 Diff"]
+        PSC["Plugin Socket Client<br/>TCP 客户端"]
+        UI["UI Feedback<br/>Toolbar / StatusBar / Balloon / ToolWindow"]
+    end
+
+    subgraph "Shared Layer Java 8"
+        PROTO["Socket Protocol<br/>4-byte length + UTF-8 JSON"]
+        DTO["Common DTO<br/>RedefineRequest / RedefineResponse"]
+    end
+
+    subgraph "Java Agent Layer Java 8+"
+        ASS["Agent Socket Server<br/>TCP 服务端 localhost:0"]
+        RD["Redefine Dispatcher"]
+        L1["L1 Redefine<br/>Instrumentation.redefineClasses()<br/>方法体热替换"]
+        L2["L2 Structure Transformer<br/>ASM Load-time Stubs<br/>结构变更 PoC 待定"]
+        CI["Class Injector<br/>ClassLoader.defineClass()<br/>新增类注入"]
+        DH["Delete Handler<br/>拒绝删除 JVM 不支持卸载"]
+        INST["JVM Instrumentation<br/>标准 JDK API"]
+    end
+
+    FL --> CM
+    CM --> CCD
+    PD --> PSC
+    CCD --> PSC
+    PSC --> PROTO
+    PROTO --> ASS
+    ASS --> RD
+    RD --> L1
+    RD --> L2
+    RD --> CI
+    RD --> DH
+    L1 --> INST
+    L2 --> INST
+    CI --> INST
+    PSC --> UI
+```
+
+---
+
+### 2.2 热更新通信时序图（Mermaid）
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Dev as Developer
+    participant Plugin as IDEA Plugin
+    participant Compiler as Compiler
+    participant Detector as ProcessDetector
+    participant PClient as PluginSocketClient
+    participant AServer as AgentSocketServer
+    participant Dispatcher as RedefineDispatcher
+    participant JVM as JVM Instrumentation
+
+    Dev->>Plugin: Save .java file Ctrl+S
+    Plugin->>Compiler: CompilerManager.make()
+    Compiler-->>Plugin: Return output .class path
+    Plugin->>Detector: Detect running Spring Boot PID
+    Detector-->>Plugin: Return PID & Agent port
+    Plugin->>PClient: Send REDEFINE_REQUEST base64 bytes
+    PClient->>AServer: TCP Socket 4-byte length + JSON
+    AServer->>Dispatcher: Parse request payload
+    alt L1 Method Body
+        Dispatcher->>JVM: Instrumentation.redefineClasses()
+    else L2 Structure Change
+        Dispatcher->>JVM: Redefine stub dispatcher class
+    else Add New Class
+        Dispatcher->>JVM: ClassLoader.defineClass() via reflection
+    else Delete Class
+        Dispatcher-->>AServer: Return not supported
+    end
+    JVM-->>Dispatcher: Result success / UnsupportedOperationException
+    Dispatcher-->>AServer: Build REDEFINE_RESPONSE
+    AServer-->>PClient: TCP response
+    PClient-->>Plugin: Update internal state
+    Plugin->>Plugin: Refresh UI StatusBar/Balloon/ToolWindow
+```
+
+---
+
+### 2.3 类替换决策流程图（Mermaid）
+
+```mermaid
+flowchart TD
+    START(["接收到类变更事件"]) --> DETECT{"判断操作类型"}
+
+    DETECT -->|METHOD_BODY| L1["L1 方法体热替换<br/>Instrumentation.redefineClasses()<br/>所有目标 JDK 支持"]
+    DETECT -->|STRUCTURE_CHANGE| L2{"L2 结构变更<br/>Load-time ASM Stubs"}
+    DETECT -->|ADD_CLASS| ADD["新增类注入<br/>ClassLoader.defineClass()<br/>通过反射实现"]
+    DETECT -->|DELETE_CLASS| DEL["删除类<br/>JVM 不支持类卸载<br/>返回明确拒绝提示"]
+
+    L2 -->|PoC 可行| L2_OK["更新桩子调度表"]
+    L2 -->|PoC 不可行| L2_NOK["降级为不支持<br/>提示用户重启应用"]
+
+    L1 --> RESULT(["返回 REDEFINE_RESPONSE"])
+    L2_OK --> RESULT
+    L2_NOK --> RESULT
+    ADD --> RESULT
+    DEL --> RESULT
+```
+
+---
+
+### 2.4 Agent 启动与挂载流程（Mermaid）
+
+```mermaid
+flowchart LR
+    START(["启动 Spring Boot 应用"]) --> JAVAAGENT["VM Options<br/>-javaagent:/path/to/agent.jar"]
+    JAVAAGENT --> PREMAIN["premain String args,<br/>Instrumentation inst"]
+    PREMAIN --> SAVE["保存 Instrumentation<br/>实例到静态字段"]
+    SAVE --> TRANS["注册 ClassFileTransformer<br/>空实现 / ASM 桩子"]
+    TRANS --> SOCKET["启动 AgentSocketServer<br/>绑定 localhost:0"]
+    SOCKET --> PORT["写入端口到临时文件<br/>/tmp/hotdeploy-{pid}.port"]
+    PORT --> WAIT{"等待 Plugin<br/>TCP 连接?"}
+    WAIT -->|Yes| SERVE["处理 REDEFINE_REQUEST"]
+    WAIT -->|No| TIMEOUT["空闲超时后关闭<br/>避免资源泄漏"]
+    SERVE --> WAIT
+```
+
+---
+
 ## 3. Project Structure (Planned)
+
+### 3.1 目录树
 
 ```
 hot-deployment/
@@ -58,16 +188,22 @@ hot-deployment/
 │   └── plan.md                  # 本计划文件
 ├── spec/
 │   └── spec.md
-├── plugin/                      # IDEA 插件模块
+├── plugin/                      # IDEA 插件模块 (Kotlin)
 │   ├── pom.xml
-│   └── src/main/{kotlin,resources}
-├── agent/                       # Java Agent 模块
+│   └── src/
+│       ├── main/kotlin/com/github/hotdeploy/plugin/
+│       └── main/resources/META-INF/plugin.xml
+├── agent/                       # Java Agent 模块 (Java 8)
 │   ├── pom.xml
-│   └── src/main/java
-├── common/                      # 共享协议 DTO（避免序列化不兼容）
+│   └── src/
+│       ├── main/java/com/github/hotdeploy/agent/
+│       └── test/groovy/
+├── common/                      # 共享协议 DTO (Java 8)
 │   ├── pom.xml
-│   └── src/main/java
-├── sample/                      # 示例 Spring Boot 项目（手动/自动化测试）
+│   └── src/
+│       ├── main/java/com/github/hotdeploy/common/
+│       └── test/groovy/
+├── sample/                      # 示例 Spring Boot 项目（Maven 单模块）
 │   ├── spring-boot-2-sample/
 │   └── spring-boot-3-sample/
 ├── doc/
@@ -75,9 +211,52 @@ hot-deployment/
 ├── README.md
 ├── CONTRIBUTING.md
 ├── ARCHITECTURE.md
-├── pom.xml                      # Root project (聚合模块)
+├── pom.xml                      # Root aggregator
 └── .github/workflows/ci.yml
 ```
+
+### 3.2 Maven 多模块配置要点
+
+**根 `pom.xml`**（聚合器，不打包）：
+- `<packaging>pom</packaging>`
+- `<modules>` 包含 `common`, `agent`, `plugin`
+- 统一声明 `groupId`, `version`, `maven.compiler.source/target`
+- 统一管理依赖版本（`dependencyManagement`）：ASM 9.x、Kotlin、Spock 2.x（Groovy 4）
+
+**`common/pom.xml`**（最底层，无外部依赖）：
+- `packaging: jar`
+- `source/target: 1.8`
+- 职责：定义 Socket 通信 DTO（如 `RedefineRequest`, `RedefineResponse`），供 `agent` 和 `plugin` 共同依赖，避免序列化不兼容。
+
+**`agent/pom.xml`**（依赖 `common`）：
+- `packaging: jar`
+- `source/target: 1.8`
+- 依赖：`common`, `org.ow2.asm:asm:9.7`, `org.ow2.asm:asm-commons:9.7`
+- **打包关键**：使用 `maven-shade-plugin` 打包为 **fat-jar**，将 ASM 和 common 一并打入。
+- **Manifest 配置**（shade 插件的 `<transformers>`）：
+  - `Premain-Class: com.github.hotdeploy.agent.HotUpdateAgent`
+  - `Can-Redefine-Classes: true`
+  - `Can-Retransform-Classes: true`
+
+**`plugin/pom.xml`**（依赖 `common`）：
+- `packaging: jar`（IntelliJ Platform Maven 插件会将其打包为符合 Marketplace 格式的 zip）
+- `source/target: 17`（IDEA 插件开发建议 JDK 17+）
+- 依赖：`common` 模块
+- 插件配置：`org.jetbrains.intellij` Maven 插件（或 `intellij-platform-gradle-plugin` 的 Maven 等价方案）
+  - `ideaVersion`: `2022.1.1`（对应 IC-221.5080.210）
+  - `sinceBuild`: `221.5080`
+  - `untilBuild`: `241.*`（根据实际测试情况调整）
+- Kotlin 版本建议 `1.9.x`，与 IDEA 2022.1+ 内置 Kotlin 版本兼容。
+
+### 3.3 模块依赖关系
+
+```
+plugin ──depends──▶ common ◀──depends── agent
+```
+
+- `agent` 和 `plugin` 均依赖 `common`，但 `agent` 与 `plugin` 之间**不直接依赖**。
+- `agent` 通过 Shade 插件将 `common` 打入 fat-jar，因此运行时 `agent.jar` 是自包含的。
+- `plugin` 在打包时也将 `common.jar` 放入 lib 目录，由 IDEA 的插件 ClassLoader 加载。
 
 ---
 
