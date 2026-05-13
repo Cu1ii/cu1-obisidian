@@ -6,6 +6,67 @@
 
 ---
 
+## 执行跟踪
+
+> 执行规则：每完成一个 task，必须更新本清单并勾选对应待办；完成后通知用户，等待用户批准后再执行下一个 task。
+> Git 规则：只允许在当前项目仓库 `/Users/fyj/Documents/project/jvav/hot-deployment` 内提交代码；外部计划/任务文档只更新内容，不执行 git 操作。
+> 验证规则：每个实现任务完成后执行 `mvn clean install -U`；如出现 error，必须先解释原因与影响。
+
+### 当前进度
+
+- 当前停在：`T33` 之前，等待用户批准后再继续。
+- 最近完成提交：`8ea6f0c Add compiler integration task spec`
+- 最近验证：`mvn clean install -U` 通过，17 个测试通过，0 failures，0 errors，0 skipped。
+
+### 已完成待办
+
+- [x] `T2` 创建根 `pom.xml`，配置 Java 17、多模块聚合、依赖版本管理。
+- [x] `T4` 创建 `common/pom.xml`，配置 Java 17 与基础依赖。
+- [x] `T6` 创建 `agent/pom.xml`，配置 common/ASM 依赖与 shade agent manifest。
+- [x] `T8` 创建 `plugin/pom.xml`，配置 Kotlin、IntelliJ 插件与 Spock 编译。
+- [x] `T10` 创建 `HotUpdateAgent.java`，保存 `Instrumentation` 并注册 transformer。
+- [x] `T23` 编写 Socket 传输协议 Spock 测试。
+- [x] `T24` 创建 `SocketProtocol.java`，实现 4 字节长度头 + UTF-8 JSON 编解码。
+- [x] `T25` 编写 Agent Socket Server/端口发现相关 Spock 测试。
+- [x] `T26` 创建 `AgentSocketServer.java`，支持本地 socket 服务、PING-PONG 与 redefine 调度。
+- [x] `T27` 编写 Plugin Socket Client Spock 测试。
+- [x] `T28` 创建 `PluginSocketClient.kt`，支持异步 socket 请求与 PING。
+- [x] `T35` 编写端口回传机制 Spock 测试。
+- [x] `T36` 创建 `PortDiscovery.java`，写入并读取 Agent 监听端口。
+- [x] `T37` 编写 `RedefineDispatcher` Spock 测试。
+- [x] `T38` 创建 `RedefineDispatcher.java`，实现方法体 redefine、新增类与删除类分发。
+- [x] `T40` 创建 `ClassInjector.java`，支持通过目标 ClassLoader 注入新增类。
+- [x] `T47` 编写类删除边界 Spock 测试。
+- [x] `T48` 创建 `ClassDeletionHandler.java`，返回不支持热删除类的明确错误。
+- [x] 补充 Spock/Surefire 配置，确保 `*Spec` 测试实际执行。
+- [x] 补充项目脚手架遗漏文件并提交，保证当前仓库状态干净。
+- [x] `T29` 编写 VirtualFileListener Spock Spec：验证 `.java` 文件保存事件被捕获，Auto/Manual 模式行为差异。
+- [x] `T30` 创建 `HotUpdateFileListener.kt`：监听 `.java` 保存事件；维护记录队列与 Auto 模式待更新队列。
+- [x] `T31` 编写 Compiler 集成 Spock Spec：验证捕获 `.class` 输出路径并忽略非 class 输出。
+- [x] `T32` 创建 `HotUpdateCompileTask.kt`：捕获编译输出 `.class` 路径，将变更类加入后续推送队列的数据来源。
+
+### 待执行待办
+
+- [ ] `T33` 编写 Spring Boot 进程检测 Spock Spec。
+- [ ] `T34` 创建 `SpringBootProcessDetector.kt`。
+- [ ] `T41` 编写变更检测 Diff Spock Spec。
+- [ ] `T42` 创建 `ClassChangeDetector.kt`。
+- [ ] `T43` 编写 Agent 参数自动注入 Spock Spec。
+- [ ] `T44` 创建 `HotUpdateRunConfigurationExtension.kt`。
+
+### 跳过或未按原子顺序完成的任务
+
+- [ ] `T1` 未单独编写 Maven 多模块结构测试。
+- [ ] `T3` 未单独编写 common POM 结构测试。
+- [ ] `T5` 未单独编写 agent POM 结构测试。
+- [ ] `T7` 未单独编写 plugin POM 结构测试。
+- [ ] `T9` 未单独编写 Agent premain 测试。
+- [ ] `T11`-`T18` PoC 与 Spring Boot sample 任务尚未执行。
+- [ ] `T19`-`T22` 原计划 DTO 测试/实现与当前代码包结构不完全一致，后续需要整理或补齐。
+- [ ] `T39` 未单独编写 `ClassInjectorSpec`，但 `ClassInjector.java` 已实现。
+
+---
+
 ## Phase 1: Foundation & Feasibility PoC（Week 1–2）
 
 | 编号 | 类型 | 任务 | 目标文件 |

@@ -11,7 +11,7 @@
 **背景**：目前 `hot-deployment/` 目录仅包含需求规格说明书，无任何代码或构建系统。本项目从零开始，需搭建 IDEA 插件 + Java Agent 双模块工程。
 
 **一期核心目标（10–12 周）**：
-- 实现 **L1（方法体热替换）**，并确保在标准 JDK 8/11/17/21 下毫秒级生效。
+- 实现 **L1（方法体热替换）**，并确保在标准 JDK 17 下毫秒级生效。
 - 实现 **L2（结构变更热替换）** 或明确其边界：新增/删除方法、字段、类。
 - 提供 Auto / Manual 两种触发模式、完整的 UI 反馈（状态栏、Balloon、日志面板）与配置持久化。
 - 零依赖（无需 DCEVM / JRebel / spring-boot-devtools），开源发布。
@@ -34,7 +34,7 @@
                    │ Socket Protocol (Length-prefixed JSON)
                    ▼
 ┌──────────────────────────────────────────────┐
-│  Java Agent (Java 8+)                        │
+│  Java Agent (Java 17+)                       │
 │  - Premain + Instrumentation                 │
 │  - Socket Server (dedicated thread)          │
 │  - ClassFileTransformer (load-time ASM)      │
@@ -44,7 +44,7 @@
 
 **技术栈**：
 - **Plugin 模块**：Kotlin + IntelliJ Platform Maven 插件（`org.jetbrains.intellij`）
-- **Agent 模块**：Java 8 + ASM 9.x（字节码操作）
+- **Agent 模块**：Java 17 + ASM 9.x（字节码操作）
 - **通信协议**：TCP Socket，4 字节长度头 + JSON Payload
 - **构建工具**：**Maven**，多模块项目（根 `pom.xml` 聚合 `agent`、`common`、`plugin`）
 
@@ -63,12 +63,12 @@ graph TB
         UI["UI Feedback<br/>Toolbar / StatusBar / Balloon / ToolWindow"]
     end
 
-    subgraph "Shared Layer Java 8"
+    subgraph "Shared Layer Java 17"
         PROTO["Socket Protocol<br/>4-byte length + UTF-8 JSON"]
         DTO["Common DTO<br/>RedefineRequest / RedefineResponse"]
     end
 
-    subgraph "Java Agent Layer Java 8+"
+    subgraph "Java Agent Layer Java 17+"
         ASS["Agent Socket Server<br/>TCP 服务端 localhost:0"]
         RD["Redefine Dispatcher"]
         L1["L1 Redefine<br/>Instrumentation.redefineClasses()<br/>方法体热替换"]
@@ -193,12 +193,12 @@ hot-deployment/
 │   └── src/
 │       ├── main/kotlin/com/github/hotdeploy/plugin/
 │       └── main/resources/META-INF/plugin.xml
-├── agent/                       # Java Agent 模块 (Java 8)
+├── agent/                       # Java Agent 模块 (Java 17)
 │   ├── pom.xml
 │   └── src/
 │       ├── main/java/com/github/hotdeploy/agent/
 │       └── test/groovy/
-├── common/                      # 共享协议 DTO (Java 8)
+├── common/                      # 共享协议 DTO (Java 17)
 │   ├── pom.xml
 │   └── src/
 │       ├── main/java/com/github/hotdeploy/common/
@@ -223,14 +223,15 @@ hot-deployment/
 - 统一声明 `groupId`, `version`, `maven.compiler.source/target`
 - 统一管理依赖版本（`dependencyManagement`）：ASM 9.x、Kotlin、Spock 2.x（Groovy 4）
 
-**`common/pom.xml`**（最底层，无外部依赖）：
+**`common/pom.xml`**（共享协议层，允许项目基础工具依赖）：
 - `packaging: jar`
-- `source/target: 1.8`
+- `source/target: 17`
+- 依赖：`commons-lang3`, `commons-collections4`（项目基础工具依赖）。
 - 职责：定义 Socket 通信 DTO（如 `RedefineRequest`, `RedefineResponse`），供 `agent` 和 `plugin` 共同依赖，避免序列化不兼容。
 
 **`agent/pom.xml`**（依赖 `common`）：
 - `packaging: jar`
-- `source/target: 1.8`
+- `source/target: 17`
 - 依赖：`common`, `org.ow2.asm:asm:9.7`, `org.ow2.asm:asm-commons:9.7`
 - **打包关键**：使用 `maven-shade-plugin` 打包为 **fat-jar**，将 ASM 和 common 一并打入。
 - **Manifest 配置**（shade 插件的 `<transformers>`）：
@@ -270,7 +271,7 @@ plugin ──depends──▶ common ◀──depends── agent
 |---|------|---------|-------------|
 | 1.1 | 多模块 Maven 项目搭建 | 根 `pom.xml` 通过 `<modules>` 聚合 `agent`、`common`、`plugin`。Agent 模块使用 `maven-shade-plugin` 输出 fat-jar（含 ASM）。Plugin 模块配置 IntelliJ Platform Maven 插件（`org.jetbrains.intellij`），target IDE 2022.1+。 | 可编译的空白工程 |
 | 1.2 | Agent 基础骨架 | `premain(String, Instrumentation)`，保存 `Instrumentation` 实例；注册一个空的 `ClassFileTransformer`。 | Agent 可 attach |
-| 1.3 | PoC-A：标准 Redefine 边界验证 | 写一个独立测试程序：加载一个类 → 修改其字节码（方法体 / 新增方法 / 新增字段）→ 调用 `redefineClasses`。分别在 **JDK 8, 17, 21** 上运行，记录 JVM 行为与异常。 | `doc/poc-report.md` 章节 A |
+| 1.3 | PoC-A：标准 Redefine 边界验证 | 写一个独立测试程序：加载一个类 → 修改其字节码（方法体 / 新增方法 / 新增字段）→ 调用 `redefineClasses`。在 **JDK 17** 上运行，记录 JVM 行为与异常。 | `doc/poc-report.md` 章节 A |
 | 1.4 | PoC-B：Load-time Instrumentation 可行性 | 在 `ClassFileTransformer.transform()` 中，使用 ASM 修改**首次加载**的类（例如：为每个方法插入一个调用 `HotSwapDispatcher` 的桩子，或将方法体委托给可替换的 `MethodContainer`）。评估：① 实现复杂度；② 对启动性能的影响；③ 对 Spring AOP/CGLIB 的兼容性。 | `doc/poc-report.md` 章节 B |
 | 1.5 | 兼容性基线 | 在 `sample/spring-boot-3-sample` 上验证 Agent 可正常 attach，不影响应用启动。 | CI 基线通过 |
 
@@ -347,7 +348,7 @@ plugin ──depends──▶ common ◀──depends── agent
 |---|------|---------|
 | 5.1 | 多模块项目测试 | 准备 Maven 多模块的 `sample` 项目。验证：① 插件能正确识别子模块中的变更类；② 编译输出路径正确；③ 只推送变更模块的类到目标进程。 |
 | 5.2 | 跨平台测试 | 在 Windows 10/11、macOS (Intel/Apple Silicon)、Ubuntu 22.04 上手动验证插件安装与热更新链路。重点检查路径分隔符、Agent jar 路径空格、Gatekeeper/Defender 拦截问题。 |
-| 5.3 | JDK 矩阵测试 | 在 CI 和本地运行：OpenJDK 8 / 11 / 17 / 21。验证 Agent attach、 redefineClasses、Socket 通信均正常。 |
+| 5.3 | JDK 矩阵测试 | 在 CI 和本地运行：OpenJDK 17。验证 Agent attach、 redefineClasses、Socket 通信均正常。 |
 | 5.4 | GitHub 仓库初始化 | 添加 `.gitignore`、License（建议 Apache 2.0）、Issue/PR 模板、Code of Conduct。 |
 | 5.5 | CI/CD | GitHub Actions workflow：① 构建 plugin（`buildPlugin`）与 agent jar；② 运行单元测试；③ 打包 artifact；④ 发布 Release 时自动上传插件 zip 和 agent jar。 |
 | 5.6 | 文档 | `README.md`：功能介绍、安装步骤（Marketplace / 本地安装）、使用方法、能力边界（明确列出支持与不支持的场景）、FAQ。`CONTRIBUTING.md`：环境搭建、Agent 调试（attach 模式 vs premain 模式）、IDEA 插件调试（Maven 方式或 IDEA 直接运行）。`ARCHITECTURE.md`：协议格式、Agent 启动流程、类替换时序图。 |
@@ -392,7 +393,7 @@ plugin ──depends──▶ common ◀──depends── agent
 - **Phase 2**：手动测试通过——Plugin 与 Agent 能完成一次端到端的 `PING-PONG`；进程检测在单/多模块项目中均能正确识别 PID。
 - **Phase 3**：在 `sample/spring-boot-3-sample` 上执行黄金路径测试：修改方法体 → 保存 → 1 秒内生效；新增类 → 可被 Spring 上下文加载。
 - **Phase 4**：UI 测试覆盖所有状态流转（灰色 → 蓝色 → 旋转 → 绿色/红色）；模拟 Agent 断开，验证状态栏与 Balloon 表现。
-- **Phase 5**：在至少 2 个操作系统 + 2 个 JDK 版本上完成手动验收测试；Marketplace 包上传测试通过（沙箱验证）。
+- **Phase 5**：在至少 2 个操作系统 + Java 17 上完成手动验收测试；Marketplace 包上传测试通过（沙箱验证）。
 
 ---
 
