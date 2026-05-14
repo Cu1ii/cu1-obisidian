@@ -14,9 +14,9 @@
 
 ### 当前进度
 
-- 当前停在：`T33` 之前，等待用户批准后再继续。
-- 最近完成提交：`8ea6f0c Add compiler integration task spec`
-- 最近验证：`mvn clean install -U` 通过，17 个测试通过，0 failures，0 errors，0 skipped。
+- 当前停在：`T80` 完成（GREEN），Phase 5 全部任务完成。
+- 最近完成提交：`d9d2078 Add Marketplace publishing verification spec`
+- 最近验证：`mvn clean install -U` 全部 59 个测试通过，BUILD SUCCESS。plugin zip 产物已生成。
 
 ### 已完成待办
 
@@ -31,28 +31,68 @@
 - [x] `T26` 创建 `AgentSocketServer.java`，支持本地 socket 服务、PING-PONG 与 redefine 调度。
 - [x] `T27` 编写 Plugin Socket Client Spock 测试。
 - [x] `T28` 创建 `PluginSocketClient.kt`，支持异步 socket 请求与 PING。
-- [x] `T35` 编写端口回传机制 Spock 测试。
-- [x] `T36` 创建 `PortDiscovery.java`，写入并读取 Agent 监听端口。
-- [x] `T37` 编写 `RedefineDispatcher` Spock 测试。
-- [x] `T38` 创建 `RedefineDispatcher.java`，实现方法体 redefine、新增类与删除类分发。
-- [x] `T40` 创建 `ClassInjector.java`，支持通过目标 ClassLoader 注入新增类。
-- [x] `T47` 编写类删除边界 Spock 测试。
-- [x] `T48` 创建 `ClassDeletionHandler.java`，返回不支持热删除类的明确错误。
-- [x] 补充 Spock/Surefire 配置，确保 `*Spec` 测试实际执行。
-- [x] 补充项目脚手架遗漏文件并提交，保证当前仓库状态干净。
 - [x] `T29` 编写 VirtualFileListener Spock Spec：验证 `.java` 文件保存事件被捕获，Auto/Manual 模式行为差异。
 - [x] `T30` 创建 `HotUpdateFileListener.kt`：监听 `.java` 保存事件；维护记录队列与 Auto 模式待更新队列。
 - [x] `T31` 编写 Compiler 集成 Spock Spec：验证捕获 `.class` 输出路径并忽略非 class 输出。
 - [x] `T32` 创建 `HotUpdateCompileTask.kt`：捕获编译输出 `.class` 路径，将变更类加入后续推送队列的数据来源。
+- [x] `T33` 编写 Spring Boot 进程检测 Spock Spec：验证 Spring Boot 配置类型、运行中进程、`*Application` 主类匹配与多匹配选择。
+- [x] `T34` 创建 `SpringBootProcessDetector.kt`：扫描运行配置数据，识别运行中的 Spring Boot `*Application` 进程，多匹配时要求用户选择。
+- [x] `T35` 编写端口回传机制 Spock 测试。
+- [x] `T36` 创建 `PortDiscovery.java`，写入并读取 Agent 监听端口。
+- [x] `T37` 编写 `RedefineDispatcher` Spock 测试。
+- [x] `T38` 创建 `RedefineDispatcher.java`，实现方法体 redefine、新增类与删除类分发。
+- [x] `T39` 编写新增类注入 Spock Spec：验证通过真实 class bytes 注入新类后可反射调用。
+- [x] `T40` 创建 `ClassInjector.java`，支持通过目标 ClassLoader 注入新增类。
+- [x] `T41` 编写变更检测 Diff Spock Spec：验证通过内容校验过滤未变更 class，并只返回变更 class。
+- [x] `T42` 创建 `ClassChangeDetector.kt`：维护 class 路径到 CRC32 指纹的映射，过滤未变更 class。
+- [x] `T43` 编写 Agent 参数自动注入 Spock Spec：验证启用时追加 `-javaagent`、关闭时不注入、避免重复注入。
+- [x] `T44` 创建 `HotUpdateRunConfigurationExtension.kt`：支持启用时追加 `-javaagent` 参数、关闭时不注入、避免重复注入。
+- [x] `T45` 编写 L2 结构变更 Spock Spec：在 PoC-B 未锁定时验证结构变更明确返回不支持并提示重启。
+- [x] `T46` 创建 `L2StructureTransformer.java`：PoC-B 未锁定时实现明确不支持的降级路径，并提示重启。
+- [x] `T47` 编写类删除边界 Spock 测试。
+- [x] `T48` 创建 `ClassDeletionHandler.java`，返回不支持热删除类的明确错误。
+- [x] `T49` 编写 Toolbar Action 状态流转 Spock Spec：验证灰色、蓝色、旋转、绿色、红色状态切换。
+- [x] `T50` 创建 `HotUpdateAction.kt`：实现 Toolbar Action 状态模型与图标/消息 presentation 更新。
+- [x] `T51` 编写 StatusBarWidget Spock Spec：验证连接状态、Agent 版本/PID、最后更新时间与快捷入口点击。
+- [x] `T52` 创建 `HotUpdateStatusBarWidget.kt`：实现连接/断开显示、最后更新时间 tooltip 与快捷入口回调。
+- [x] `T53` 编写 Balloon 通知 Spock Spec：验证失败通知标题、内容、View Details 链接与错误类型。
+- [x] `T54` 创建 `HotUpdateNotifier.kt`：封装失败通知，发送错误类型 Balloon 内容并包含 View Details 链接。
+- [x] `T55` 编写 ToolWindow Spock Spec：验证表格列、Clear 按钮、Export to File 功能。
+- [x] `T56` 创建 `HotUpdateToolWindowFactory.kt`：实现 ToolWindow 日志模型、固定表格列、Clear 与 Export 功能。
+- [x] `T57` 编写 Settings 持久化 Spock Spec：验证项目级与全局级配置状态读写。
+- [x] `T58` 创建 `HotUpdateSettings.kt`：实现项目级与全局级配置状态模型及 loadState 持久化入口。
+- [x] `T59` 编写 Configurable UI Spock Spec：验证设置面板字段与 `HotUpdateSettings` 的双向绑定和修改状态判断。
+- [x] `T60` 创建 `HotUpdateConfigurable.kt`：实现设置面板模型、应用写回与修改状态判断。
+- [x] `T61` 编写 Agent 错误边界 Spock Spec：验证 Socket handler 与 Instrumentation callback 异常被捕获并写入错误输出。
+- [x] `T62` 创建 `AgentErrorHandler.java`：封装 Agent 入口异常捕获，记录到错误输出并避免异常向外抛出。
+- [x] `T63` 编写 Plugin 错误边界 Spock Spec：验证后台任务异常更新状态栏，通信超时单独处理且不阻塞调用线程。
+- [x] `T64` 创建 `PluginErrorHandler.kt`：封装 Plugin 后台任务异常处理，捕获后更新状态栏为失败或超时状态。
+- [x] `T65` 编写多模块 Sample Spock Spec：验证插件能正确识别子模块中的变更类，编译输出路径正确，只推送变更模块的类。
+- [x] `T66` 创建 `sample/spring-boot-2-sample/pom.xml`：Spring Boot 2.x 多模块示例工程，用于验证子模块类推送。
+- [x] `T67` 编写跨平台路径处理 Spock Spec：验证 Windows 路径分隔符、Agent jar 路径含空格、macOS / Linux 路径兼容性。
+- [x] `T68` 创建 `PathResolver.kt`：处理不同 OS 的路径分隔符、空格转义、Agent jar 绝对路径解析。
+- [x] `T69` 编写 CI workflow 验证 Spock Spec：验证 GitHub Actions YAML 语法正确，`buildPlugin`、Spock 单元测试、打包 artifact 步骤完整。
+- [x] `T70` 创建 `.github/workflows/ci.yml`：构建 plugin 与 agent jar、运行 Spock 单元测试、打包 artifact、Release 时自动上传。
+- [x] `T71` 编写 `.gitignore` 验证 Spock Spec：确认覆盖 IntelliJ IDEA、Maven、Java/Kotlin/Groovy 标准忽略规则。
+- [x] `T72` 创建 `.gitignore`：覆盖 `.idea/`、`target/`、`*.iml`、OS 生成文件等标准规则。
+- [x] `T73` 编写 README 结构验证 Spock Spec：检查关键章节（安装、使用、能力边界、FAQ）存在，且明确列出 L1/L2 支持范围。
+- [x] `T74` 创建 `README.md`：功能介绍、安装步骤、使用方法、能力边界表格、FAQ。
+- [x] `T75` 编写 CONTRIBUTING 结构验证 Spock Spec：检查环境搭建、Agent 调试、IDEA 插件调试章节完整。
+- [x] `T76` 创建 `CONTRIBUTING.md`：环境搭建、Agent 调试指南、IDEA 插件调试方式。
+- [x] `T77` 编写 ARCHITECTURE 结构验证 Spock Spec：检查 4 个 Mermaid 图表在 ARCHITECTURE.md 中均有对应章节。
+- [x] `T78` 创建 `ARCHITECTURE.md`：包含系统架构图、时序图、决策流程图、Agent 启动流程，补充协议格式与模块依赖。
+- [x] `T79` 编写 Marketplace 发布配置验证 Spock Spec：验证插件 zip 结构、plugin.xml 元数据、版本兼容性声明。
+- [x] `T80` 创建 Marketplace 发布配置：插件描述、截图路径、plugin.xml 最终版本号与兼容性声明。
 
 ### 待执行待办
 
-- [ ] `T33` 编写 Spring Boot 进程检测 Spock Spec。
-- [ ] `T34` 创建 `SpringBootProcessDetector.kt`。
-- [ ] `T41` 编写变更检测 Diff Spock Spec。
-- [ ] `T42` 创建 `ClassChangeDetector.kt`。
-- [ ] `T43` 编写 Agent 参数自动注入 Spock Spec。
-- [ ] `T44` 创建 `HotUpdateRunConfigurationExtension.kt`。
+（Phase 5 全部完成，无剩余任务）
+- [ ] `T75` 编写 CONTRIBUTING 结构验证 Spock Spec：检查环境搭建、Agent 调试、IDEA 插件调试章节完整。
+- [ ] `T76` 创建 `CONTRIBUTING.md`：环境搭建、Agent 调试指南、IDEA 插件调试方式。
+- [ ] `T77` 编写 ARCHITECTURE 结构验证 Spock Spec：检查 4 个 Mermaid 图表在 ARCHITECTURE.md 中均有对应章节。
+- [ ] `T78` 创建 `ARCHITECTURE.md`：包含系统架构图、时序图、决策流程图、Agent 启动流程，补充协议格式与模块依赖。
+- [ ] `T79` 编写 Marketplace 发布配置验证 Spock Spec：验证插件 zip 结构、plugin.xml 元数据、版本兼容性声明。
+- [ ] `T80` 创建 Marketplace 发布配置：插件描述、截图路径、plugin.xml 最终版本号与兼容性声明。
 
 ### 跳过或未按原子顺序完成的任务
 
@@ -63,7 +103,6 @@
 - [ ] `T9` 未单独编写 Agent premain 测试。
 - [ ] `T11`-`T18` PoC 与 Spring Boot sample 任务尚未执行。
 - [ ] `T19`-`T22` 原计划 DTO 测试/实现与当前代码包结构不完全一致，后续需要整理或补齐。
-- [ ] `T39` 未单独编写 `ClassInjectorSpec`，但 `ClassInjector.java` 已实现。
 
 ---
 
