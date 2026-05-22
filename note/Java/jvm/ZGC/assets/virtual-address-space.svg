@@ -1,0 +1,47 @@
+<svg width="820" height="160" viewBox="0 0 820 160" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,Helvetica,sans-serif;background:transparent;">
+  <!-- top dimension line: 64位虚拟地址空间 -->
+  <line x1="40" y1="20" x2="780" y2="20" stroke="#ccc" stroke-width="1.2"/>
+  <path d="M 40 20 L 48 16 M 40 20 L 48 24" stroke="#ccc" stroke-width="1.2" fill="none"/>
+  <path d="M 780 20 L 772 16 M 780 20 L 772 24" stroke="#ccc" stroke-width="1.2" fill="none"/>
+  <text x="410" y="16" text-anchor="middle" font-size="14" fill="#ccc">64 位虚拟地址空间</text>
+  <!-- main bar: 6 segments, each ~4TB conceptually -->
+  <!-- Java Heap (4TB) - pink/red -->
+  <rect x="40" y="40" width="120" height="55" fill="#fecaca" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="100" y="73" text-anchor="middle" font-size="14" fill="#111">Java Heap</text>
+  <!-- M0 (4TB) - green -->
+  <rect x="160" y="40" width="120" height="55" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="220" y="73" text-anchor="middle" font-size="14" fill="#111">M0</text>
+  <!-- M1 (4TB) - green -->
+  <rect x="280" y="40" width="120" height="55" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="340" y="73" text-anchor="middle" font-size="14" fill="#111">M1</text>
+  <!-- 预留 (4TB) - gray -->
+  <rect x="400" y="40" width="120" height="55" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="460" y="73" text-anchor="middle" font-size="14" fill="#555">预留</text>
+  <!-- Remapped (4TB) - green -->
+  <rect x="520" y="40" width="140" height="55" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="590" y="73" text-anchor="middle" font-size="14" fill="#111">Remapped</text>
+  <!-- 预留 (remaining) - gray -->
+  <rect x="660" y="40" width="120" height="55" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="720" y="73" text-anchor="middle" font-size="14" fill="#555">预留</text>
+  <!-- bottom dimension lines -->
+  <!-- Java Heap 4TB -->
+  <line x1="40" y1="115" x2="160" y2="115" stroke="#ccc" stroke-width="1"/>
+  <path d="M 40 115 L 48 111 M 40 115 L 48 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <path d="M 160 115 L 152 111 M 160 115 L 152 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <text x="100" y="135" text-anchor="middle" font-size="12" fill="#ccc">4TB</text>
+  <!-- M0 4TB -->
+  <line x1="160" y1="115" x2="280" y2="115" stroke="#ccc" stroke-width="1"/>
+  <path d="M 160 115 L 168 111 M 160 115 L 168 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <path d="M 280 115 L 272 111 M 280 115 L 272 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <text x="220" y="135" text-anchor="middle" font-size="12" fill="#ccc">4TB</text>
+  <!-- M1 4TB -->
+  <line x1="280" y1="115" x2="400" y2="115" stroke="#ccc" stroke-width="1"/>
+  <path d="M 280 115 L 288 111 M 280 115 L 288 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <path d="M 400 115 L 392 111 M 400 115 L 392 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <text x="340" y="135" text-anchor="middle" font-size="12" fill="#ccc">4TB</text>
+  <!-- Remapped 4TB -->
+  <line x1="520" y1="115" x2="660" y2="115" stroke="#ccc" stroke-width="1"/>
+  <path d="M 520 115 L 528 111 M 520 115 L 528 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <path d="M 660 115 L 652 111 M 660 115 L 652 119" stroke="#ccc" stroke-width="1" fill="none"/>
+  <text x="590" y="135" text-anchor="middle" font-size="12" fill="#ccc">4TB</text>
+</svg>

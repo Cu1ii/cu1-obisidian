@@ -33,13 +33,13 @@ flowchart TB
     class Heap heap
 ```
 
-| 区域 | 说明 | 默认占比 |
-|------|------|----------|
-| **Eden** | 多数对象首次分配的地方 | Young 的 8/10 |
-| **Survivor 0 (S0)** | 年龄未满的对象在此流转 | Young 的 1/10 |
-| **Survivor 1 (S1)** | 同上，与 S0 互为主从 | Young 的 1/10 |
-| **Old Gen** | 长期存活的对象晋升至此 | 堆的 2/3 (默认 -XX:NewRatio=2) |
-| **Metaspace** | 类元数据（取代 JDK 7 的 PermGen） | 本地内存，默认无上限 |
+| 区域                  | 说明                       | 默认占比                       |
+| ------------------- | ------------------------ | -------------------------- |
+| **Eden**            | 多数对象首次分配的地方              | Young 的 8/10               |
+| **Survivor 0 (S0)** | 年龄未满的对象在此流转              | Young 的 1/10               |
+| **Survivor 1 (S1)** | 同上，与 S0 互为主从             | Young 的 1/10               |
+| **Old Gen**         | 长期存活的对象晋升至此              | 堆的 2/3 (默认 -XX:NewRatio=2) |
+| **Metaspace**       | 类元数据（取代 JDK 7 的 PermGen） | 本地内存，默认无上限                 |
 
 > **注意**：JDK 8+ 已移除永久代 (PermGen)，改为 Metaspace（使用本地内存）。
 
@@ -742,7 +742,7 @@ CMF Serial Old → ConcurrentMarkSweep count +1, time + 30s   (全部 STW)
 - **ZGC**（JDK 15+）：超低延迟（<10ms），几乎不 STW
 - **Shenandoah**（JDK 12+）：与 ZGC 类似的低延迟收集器
 
-> 详见 [[note/Java/jvm/G1.md]] 和 [[note/Java/jvm/ZGC.md]]
+> 详见 [[G1]] 和 [[ZGC]]
 
 ---
 
@@ -786,5 +786,3 @@ flowchart LR
 
 - 《深入理解 Java 虚拟机》（周志明）
 - Oracle JDK 文档：Garbage Collection Tuning Guide
-- [[note/Java/jvm/G1.md]]
-- [[note/Java/jvm/ZGC.md]]

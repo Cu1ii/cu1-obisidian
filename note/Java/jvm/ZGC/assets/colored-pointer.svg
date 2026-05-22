@@ -1,0 +1,26 @@
+<svg width="820" height="210" viewBox="0 0 820 210" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,Helvetica,sans-serif;background:transparent;">
+  <defs>
+    <marker id="zgc_arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 0.5 L 7.5 4 L 0 7.5 Z" fill="#ccc"/>
+    </marker>
+  </defs>
+  <text x="170" y="22" text-anchor="middle" font-size="16" fill="#ccc">Unused bits</text>
+  <text x="555" y="22" text-anchor="middle" font-size="16" fill="#ccc">Object Address</text>
+  <text x="35" y="73" text-anchor="middle" font-size="14" fill="#ccc">bits</text>
+  <rect x="70" y="40" width="200" height="60" fill="none" stroke="#888" stroke-width="1.5"/>
+  <text x="170" y="78" text-anchor="middle" font-size="20" fill="#ccc">18</text>
+  <rect x="276" y="40" width="14" height="60" fill="#f97316" stroke="#888" stroke-width="1"/>
+  <rect x="293" y="40" width="14" height="60" fill="#3b82f6" stroke="#888" stroke-width="1"/>
+  <rect x="310" y="40" width="14" height="60" fill="#b91c1c" stroke="#888" stroke-width="1"/>
+  <rect x="327" y="40" width="14" height="60" fill="#16a34a" stroke="#888" stroke-width="1"/>
+  <rect x="347" y="40" width="430" height="60" fill="none" stroke="#888" stroke-width="1.5"/>
+  <text x="562" y="78" text-anchor="middle" font-size="20" fill="#ccc">42</text>
+  <path d="M 248 155 L 283 125 L 283 100" fill="none" stroke="#ccc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#zgc_arrow)"/>
+  <text x="232" y="172" text-anchor="middle" font-size="13" fill="#ccc">Finalizable</text>
+  <path d="M 335 180 L 300 148 L 300 100" fill="none" stroke="#ccc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#zgc_arrow)"/>
+  <text x="350" y="198" text-anchor="middle" font-size="13" fill="#ccc">Remapped</text>
+  <path d="M 395 155 L 317 125 L 317 100" fill="none" stroke="#ccc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#zgc_arrow)"/>
+  <text x="420" y="172" text-anchor="middle" font-size="13" fill="#ccc">Marked 1</text>
+  <path d="M 500 155 L 334 125 L 334 100" fill="none" stroke="#ccc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#zgc_arrow)"/>
+  <text x="525" y="172" text-anchor="middle" font-size="13" fill="#ccc">Marked 0</text>
+</svg>
