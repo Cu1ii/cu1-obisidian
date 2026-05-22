@@ -79,71 +79,24 @@ ZGC 使用 Region 化的堆结构，将堆划分为等大小的 Region，但相�
 
 #### 传统 GC vs ZGC
 
-```mermaid
-flowchart LR
-    accTitle: Traditional GC Marking Flow
-    accDescr: Traditional GC accesses the object header Mark Word to check mark bits, requiring an extra memory indirection
+![传统 GC 标记流程：访问对象头读取 Mark Word](assets/traditional-gc-marking.svg)
 
-    obj_ref[对象引用] --> heap_lookup[访问堆定位对象]
-    heap_lookup --> read_markword[读取 Mark Word<br/>检查标记位]
-    read_markword --> judge_mark[判断是否已标记]
 
-    classDef trad fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#7c2d12
-    class obj_ref,heap_lookup,read_markword,judge_mark trad
-```
-
-```mermaid
-flowchart LR
-    accTitle: ZGC Colored Pointer Marking Flow
-    accDescr: ZGC encodes liveness metadata in pointer bits 42-45, judging object state directly from the reference without accessing object headers
-
-    obj_ref_z[对象引用] --> read_metadata[直接读取指针<br/>42~45 位元数据]
-    read_metadata --> judge_view[根据视图判断存活<br/>M0=本轮 M1=过期<br/>Remapped=未访问]
-
-    classDef zgc_style fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    class obj_ref_z,read_metadata,judge_view zgc_style
-```
+![ZGC 着色指针标记流程：指针即元数据](assets/zgc-colored-pointer-marking.svg)
 
 #### 地址视图与三段虚拟地址空间
 
 ZGC 将着色信息编码在 64 位指针的元数据位中，通过三个虚拟地址视图实现标记状态的隐式判断：
 
-![ZGC 64-bit Colored Pointer](colored-pointer.svg)
+![ZGC 64-bit Colored Pointer](assets/colored-pointer.svg)
 
 这三个视图对应三段不同的虚拟地址区间，但通过内存多映射（Multi-Mapped Memory）指向**同一物理堆内存**：
 
-![ZGC Virtual Address Space](virtual-address-space.svg)
+![ZGC Virtual Address Space](assets/virtual-address-space.svg)
 
 GC 通过交替激活 M0 / M1 作为"当前标记视图"，让两次 GC 周期共享同一套标记机制，无需显式清除上次的标记位：
 
-```mermaid
-flowchart LR
-    accTitle: ZGC Alternating M0 and M1 Mark Views Across Cycles
-    accDescr: Two consecutive GC cycles demonstrating how M0 and M1 views alternate as the active mark view, eliminating the need to explicitly clear previous mark bits
-
-    subgraph cycle_n["第 N 轮 GC"]
-        direction TB
-        n1["① 初始<br/>指针 = Remapped"] --> n2["② Mark Start（STW）<br/>激活 M0"]
-        n2 --> n3["③ 并发标记<br/>存活 → M0"]
-    end
-
-    subgraph cycle_n_plus_1["第 N+1 轮 GC"]
-        direction TB
-        n4["④ 初始<br/>M0 已过期"] --> n5["⑤ Mark Start（STW）<br/>激活 M1"]
-        n5 --> n6["⑥ 并发标记<br/>存活 → M1"]
-    end
-
-    n3 --> n4
-    n6 --> n7["⑦ 第 N+2 轮<br/>M0 再次激活……"]
-
-    classDef stw_style fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
-    classDef mark_style fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef init_style fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-
-    class n2,n5 stw_style
-    class n3,n6 mark_style
-    class n1,n4,n7 init_style
-```
+![ZGC M0 与 M1 视图在 GC 周期间交替](assets/zgc-m0-m1-alternating.svg)
 
 | 视图 | 作用 |
 |------|------|
@@ -167,42 +120,7 @@ ZGC 的着色指针中，元数据位记录的**不是布尔值"是否标记"**�
 
 用一个具体例子走一遍流程：
 
-```mermaid
-flowchart TB
-    accTitle: ZGC Two-Cycle Mark and Relocate Walkthrough
-    accDescr: Detailed state transitions through two consecutive ZGC cycles showing how objects are marked via M0/M1 views, relocated concurrently, and how unmarked objects from prior cycles are naturally discarded
-
-    subgraph cycle_n["第 N 轮 GC"]
-        direction TB
-        s1["① 初始<br/>指针 = Remapped"] --> s2["② Mark Start（STW）<br/>切换至 M0"]
-        s2 --> s3["③ 并发标记<br/>遍历对象图"]
-        s3 --> s4["④ 被访问的对象<br/>指针 → M0（存活）"]
-        s3 --> s5["④ 未被访问的对象<br/>指针保持 Remapped（死亡）"]
-        s4 --> s6["⑤ Relocate Start（STW）<br/>切回 Remapped"]
-        s5 --> s6
-        s6 --> s7["⑥ 并发转移<br/>复制 + 读屏障自愈"]
-    end
-
-    subgraph cycle_n1["第 N+1 轮 GC"]
-        direction TB
-        t1["⑦ Mark Start（STW）<br/>切换至 M1"] --> t2["⑧ 并发标记<br/>遍历对象图"]
-        t2 --> t3["⑨ 被访问 → M1<br/>（本轮存活）"]
-        t2 --> t4["⑨ 保持 M0<br/>（上轮已过期）"]
-        t2 --> t5["⑨ 保持 Remapped<br/>（从未存活）"]
-    end
-
-    s7 --> t1
-
-    classDef stw_style fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
-    classDef concurrent_style fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef live_style fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    classDef dead_style fill:#f3f4f6,stroke:#6b7280,stroke-width:1px,color:#1f2937
-
-    class s2,s6,t1 stw_style
-    class s3,s7,t2 concurrent_style
-    class s4,t3 live_style
-    class s5,t4,t5 dead_style
-```
+![ZGC 两轮 GC 详细走查：标记 / 转移 / 重定位](assets/zgc-two-cycle-walkthrough.svg)
 
 | 状态 | 第 N 轮 | 第 N+1 轮 |
 |------|--------|---------|
@@ -242,25 +160,7 @@ ZGC 的一次垃圾回收周期由三个并发阶段组成：**标记**、**转�
 
 #### 完整周期（非分代 ZGC）
 
-```mermaid
-flowchart LR
-    accTitle: ZGC Non-Generational GC Cycle Phases
-    accDescr: Six sequential phases of a ZGC collection cycle with three sub-millisecond STW pauses in red and three concurrent phases in green, plus a fallback loop from Mark End
-
-    pms["Mark Start<br/>初始标记（STW <1ms）"] --> cmr["Mark / Remap<br/>并发标记与重映射"]
-    cmr --> pme["Mark End<br/>再标记（STW ≤1ms）"]
-    pme --> cpr["Prepare for Relocate<br/>并发转移准备"]
-    cpr --> prs["Relocate Start<br/>初始转移（STW <1ms）"]
-    prs --> cr["Relocate<br/>并发转移"]
-
-    pme -.->|超时回退| cmr
-
-    classDef stw_style fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
-    classDef concurrent_style fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-
-    class pms,pme,prs stw_style
-    class cmr,cpr,cr concurrent_style
-```
+![ZGC（非分代）完整 GC 周期：三段亚毫秒 STW + 三段并发](assets/zgc-cycle-phases.svg)
 
 各阶段详细说明：
 

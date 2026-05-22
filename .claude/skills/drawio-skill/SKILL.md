@@ -1,10 +1,10 @@
 ---
 name: drawio-skill
 version: 2.0.0
-description: Use when the user requests diagrams, flowcharts, architecture diagrams, ER diagrams, UML / sequence / class diagrams, network topology, ML/DL model figures (Transformer/CNN/LSTM), mind maps, or any visualization. Also use proactively when explaining systems with 3+ components, complex data flows, or relationships that benefit from visual representation. Best suited when the diagram needs custom styling, rich shape vocabulary, or swimlanes. Generates `.drawio` XML files only — users view and export (SVG/PNG/PDF) via the Obsidian drawio plugin.
+description: Use when the user requests diagrams, flowcharts, architecture diagrams, ER diagrams, UML / sequence / class diagrams, network topology, ML/DL model figures (Transformer/CNN/LSTM), mind maps, or any visualization. Also use proactively when explaining systems with 3+ components, complex data flows, or relationships that benefit from visual representation. Best suited when the diagram needs custom styling, rich shape vocabulary, or swimlanes. Generates `.drawio` XML files, and — when the `drawio` CLI is available — automatically exports a sibling `.svg` alongside each `.drawio` file.
 license: MIT
 homepage: https://github.com/Agents365-ai/drawio-skill
-compatibility: No external dependencies. Users view, edit, and export `.drawio` files via the Obsidian drawio plugin.
+compatibility: Optional dependency on the `drawio` CLI (from drawio-desktop) for automatic SVG export. Without the CLI, the skill still produces `.drawio` files that users view/export via the Obsidian drawio plugin.
 platforms: [macos, linux, windows]
 metadata: {"hermes":{"tags":["drawio","diagram","flowchart","architecture","visualization","uml"],"category":"design","related_skills":["mermaid","excalidraw","plantuml"]},"author":"Agents365-ai","version":"2.0.0"}
 ---
@@ -13,9 +13,9 @@ metadata: {"hermes":{"tags":["drawio","diagram","flowchart","architecture","visu
 
 ## Overview
 
-Generate `.drawio` XML files. Users view, edit, and export to SVG/PNG/PDF via the **Obsidian drawio plugin** — this skill never runs the draw.io CLI and has no Python dependency.
+Generate `.drawio` XML files. When the `drawio` CLI (from drawio-desktop) is available, the skill **automatically exports a sibling `.svg`** beside every `.drawio` it writes — see `## Auto-Export to SVG` below. Without the CLI, the skill still produces valid `.drawio` files; the user views/exports them via the **Obsidian drawio plugin**.
 
-Iteration model: the user opens the generated file in Obsidian, gives text feedback in chat, and the agent edits the XML directly.
+Iteration model: the user opens the generated file in Obsidian, gives text feedback in chat, and the agent edits the XML directly (and re-exports the SVG on every save when the CLI is present).
 
 ## Bundled resources
 
@@ -32,10 +32,39 @@ Read these on demand — none need to be in context up front.
 
 Before starting, assess whether the user's request is specific enough. If key details are missing, ask 1-3 focused questions:
 - **Diagram type** — which preset? (ERD, UML, Sequence, Architecture, ML/DL, Flowchart, or general)
-- **Output location** — default is the vault's current working dir; honor any explicit path the user gives (e.g. `attachments/`, `notes/diagrams/`). Don't ask if they didn't mention one.
+- **Output location** — default is the **`assets/` subfolder of the directory containing the current note** (see "Output path resolution" below). Honor any explicit path the user gives (e.g. `attachments/`, `notes/diagrams/`). Don't ask if they didn't mention one.
 - **Scope/fidelity** — how many components? Any specific technologies or labels?
 
 Skip clarification if the request already specifies these details or is clearly simple (e.g., "draw a flowchart of X").
+
+### Output path resolution
+
+Both the `.drawio` and the auto-exported `.svg` always land in the **same directory**, resolved in this order:
+
+1. **Explicit user path** — if the user named a directory or full path in the request (e.g. "save it to `attachments/diagrams/`"), use that verbatim.
+2. **Current note's `assets/` folder** *(default)* — if a `<current_note>` is in context at `<dir>/<note>.md`, write to `<dir>/assets/`. Example: current note `note/Java/jvm/ZGC/ZGC.md` → output dir `note/Java/jvm/ZGC/assets/`.
+3. **Vault current working dir** — only when no current note and no explicit path was given.
+
+`mkdir -p` the target dir before writing. The file basename should be a short kebab-case slug describing the diagram (e.g. `zgc-cycle-phases.drawio`), not the note name.
+
+### Embedding & link syntax (GitHub-compatible standard Markdown)
+
+Always emit **standard CommonMark / GitHub-flavored Markdown** when referring to the generated files, never Obsidian wiki-links (`[[...]]` / `![[...]]`). Obsidian still renders standard Markdown, but the reverse is not true — and notes in this vault may be pushed to GitHub / read by other Markdown tools.
+
+**Path form** — use the **relative path from the note's directory**, not the vault-root path:
+- Note at `note/Java/jvm/ZGC/ZGC.md`, asset at `note/Java/jvm/ZGC/assets/foo.svg` → relative path `assets/foo.svg`
+- Don't write the full `note/Java/jvm/ZGC/assets/foo.svg` — it breaks once the note moves
+- Spaces in path: URL-encode as `%20` (e.g. `assets/my%20diagram.svg`)
+
+**Syntax cheat sheet:**
+
+| Purpose | Use | Avoid |
+|---|---|---|
+| Embed SVG inline (renders as image) | `![ZGC GC cycle](assets/zgc-cycle-phases.svg)` | `![[assets/zgc-cycle-phases.svg]]` |
+| Link to the `.drawio` source | `[zgc-cycle-phases.drawio](assets/zgc-cycle-phases.drawio)` | `[[assets/zgc-cycle-phases.drawio]]` |
+| Embed PNG (when explicitly requested) | `![alt](assets/foo.png)` | `![[assets/foo.png]]` |
+
+**Alt text:** always provide meaningful alt text inside `![...]` — it's required for accessibility, used by GitHub when SVG fails to load, and indexed for search. Use a short noun-phrase describing the diagram (e.g. `![ZGC colored pointer marking flow](assets/zgc-colored-pointer-marking.svg)`), not the filename.
 
 **Step 0 — Resolve active preset.** Determine which (if any) user-defined style preset applies to this generation.
 
@@ -48,8 +77,9 @@ Load the preset JSON from `~/.drawio-skill/styles/<name>.json`, falling back to 
 When a preset loads successfully, mention it in the first line of the reply: *"Using preset `<name>` (confidence: `<level>`)."* See `references/style-presets.md` for how the preset changes color/shape/edge/font decisions.
 
 1. **Plan** — identify shapes, relationships, layout (LR or TB), group by tier/layer.
-2. **Generate** — write the `.drawio` XML file to disk. Default output dir is the vault's current working dir; if the user specified an output path or directory (e.g. `attachments/`, `notes/diagrams/`), use that instead — `mkdir -p` the target dir first.
-3. **Deliver** — report the file path as an Obsidian wiki-link (e.g. `[[attachments/foo.drawio]]`). Tell the user to open it via the Obsidian drawio plugin to view, fine-tune, or export (the plugin handles SVG/PNG/PDF export natively — the agent does not).
+2. **Generate** — write the `.drawio` XML file to disk. Resolve the output dir per the "Output path resolution" rule above (default = `<current-note-dir>/assets/`); `mkdir -p` the target dir first.
+3. **Auto-export SVG** — immediately after writing the `.drawio`, run the export procedure in `## Auto-Export to SVG`. The `.svg` goes next to the `.drawio` (same dir, same basename). On failure (CLI missing or export error), continue without blocking — never delete the `.drawio` if export fails.
+4. **Deliver** — link the `.drawio` source via standard Markdown, e.g. `[bar.drawio](assets/bar.drawio)`. When SVG export succeeded, also embed the SVG inline with standard Markdown image syntax: `![alt text](assets/bar.svg)` — never `![[...]]`. See "Embedding & link syntax" above for the path/alt-text rules. When export failed/skipped, tell the user to open the `.drawio` via the Obsidian drawio plugin (the plugin handles SVG/PNG/PDF export natively).
 
 ### Review Loop
 
@@ -57,6 +87,7 @@ After delivering the `.drawio` file:
 - User opens it in Obsidian (drawio plugin) and reviews the rendering
 - User provides text feedback in chat (e.g. "make the DB node green", "add an arrow from A to B", "move X above Y", "swap to top-down layout")
 - Apply targeted XML edits per the table below and re-save the file
+- **Re-run the SVG export** after every save (same procedure as the initial Deliver step) so the embedded `![alt](...svg)` preview stays in sync
 - Re-deliver and loop until the user is satisfied
 
 **Targeted edit rules** — for each type of feedback, apply the minimal XML change:
@@ -77,6 +108,70 @@ After delivering the `.drawio` file:
 - For layout-wide changes (e.g., swap LR↔TB, "start over"): regenerate full XML
 - Overwrite the same `{name}.drawio` file each iteration — do not create `v1`, `v2`, `v3` files
 - **Safety valve:** after 5 iteration rounds, suggest the user fine-tune directly in the Obsidian drawio editor (drag, resize, restyle) rather than continue text iteration
+
+## Auto-Export to SVG
+
+After writing any `.drawio` file, the agent attempts to export a sibling `.svg` at the same path (basename + `.svg`). The export is **non-blocking** — if anything fails, the `.drawio` file is still kept and delivered.
+
+### Procedure
+
+1. **Detect the CLI.** Run `command -v drawio` (or `where drawio` on Windows). Only if the binary exists does export proceed.
+2. **Detect display (Linux only).** If on Linux and `$DISPLAY` is empty, the CLI cannot launch Electron — wrap with `xvfb-run -a` if `xvfb-run` is also on PATH. On macOS / Windows / Linux-with-display, call `drawio` directly.
+3. **Export.** Run, for each generated `.drawio` file at `<path>.drawio`:
+
+   ```bash
+   drawio -x -f svg --embed-diagram -o "<path>.svg" "<path>.drawio"
+   ```
+
+   - `-x` export, `-f svg` SVG format
+   - `--embed-diagram` embeds the source `.drawio` XML inside the SVG so the SVG itself can be re-opened and edited in draw.io
+   - Quote paths to handle spaces
+
+4. **Handle multi-page diagrams.** SVG is single-page. If the source has multiple `<diagram>` elements, the CLI exports the first page by default. For each additional page index `n`, also export `<path>.page-n.svg` via `-p n`.
+5. **Verify.** Check the exit code and that the `.svg` exists and is non-empty. On failure, capture stderr and report it once in the chat reply (do not retry silently).
+
+### Reference shell helper
+
+When exporting one or many `.drawio` files in a single batch (e.g. after generating 5 diagrams), prefer a single Bash invocation over five separate ones:
+
+```bash
+export_svg() {
+  local src="$1"
+  local dst="${src%.drawio}.svg"
+  if ! command -v drawio >/dev/null 2>&1; then
+    echo "drawio CLI not found — skipping SVG export for $src" >&2
+    return 0
+  fi
+  local runner=""
+  if [ "$(uname)" = "Linux" ] && [ -z "$DISPLAY" ] && command -v xvfb-run >/dev/null 2>&1; then
+    runner="xvfb-run -a"
+  fi
+  $runner drawio -x -f svg --embed-diagram -o "$dst" "$src"
+}
+```
+
+Batch usage:
+
+```bash
+for f in path/to/dir/*.drawio; do export_svg "$f"; done
+```
+
+### When the CLI is missing
+
+If `command -v drawio` returns nothing, tell the user **once per session**:
+
+> SVG auto-export is disabled because the `drawio` CLI was not found. Install it with `brew install --cask drawio` (macOS) or download drawio-desktop from https://github.com/jgraph/drawio-desktop/releases (Linux/Windows). The skill will keep generating `.drawio` files — open them in Obsidian's drawio plugin to view.
+
+Do not repeat this message on every subsequent generation in the same session.
+
+### Why SVG (not PNG/PDF) as the default
+
+- **Vector** — scales cleanly inside Obsidian, on Retina displays, and in exported PDFs.
+- **Text-searchable** — labels remain real text, so the diagram contributes to Obsidian search.
+- **Round-trippable** — with `--embed-diagram`, the SVG itself can be re-opened by drawio-desktop and edited; no separate `.drawio` lookup needed.
+- **Inline-previewable in chat & notes** — `![alt](file.svg)` renders both in Obsidian and on GitHub, while a `.drawio` file does not.
+
+If the user explicitly asks for PNG or PDF instead, swap `-f svg` for `-f png` (add `-t` for transparent background) or `-f pdf` (add `-a` for all-pages). SVG remains the default auto-export.
 
 ## Style Presets
 

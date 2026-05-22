@@ -160,18 +160,18 @@ sequenceDiagram
 参考：[从 ReentrantLock 的实现看 AQS 的原理及应用](https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html)
 ### Q4：怎么区分 JDK 线程池里的核心线程和非核心线程
 
-> TODO — 纪一帆
+> TODO
 
 ---
 ## 五、Tomcat
 
 ### Q1：Tomcat 的线程池模型和 JDK 线程池有什么区别
 
-> TODO — 纪一帆
+> TODO
 
 # 六、ES 相关
 ## Q1：ES  索引的查询过程？
 >TOOD
 
-## Q2：ES 文档删除流程，以及大量删除后会有什么影响？
+## Q2：ES 文档删除有哪些步骤，以及大量删除后会有什么影响？
 >TODO
