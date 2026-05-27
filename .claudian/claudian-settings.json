@@ -5,7 +5,7 @@
   "thinkingBudget": "medium",
   "effortLevel": "high",
   "serviceTier": "default",
-  "enableAutoTitleGeneration": false,
+  "enableAutoTitleGeneration": true,
   "titleGenerationModel": "",
   "excludedTags": [],
   "mediaFolder": "",
@@ -22,7 +22,7 @@
   "locale": "zh-CN",
   "providerConfigs": {
     "claude": {
-      "safeMode": "acceptEdits",
+      "safeMode": "default",
       "cliPath": "",
       "cliPathsByHost": {},
       "loadUserSettings": true,
