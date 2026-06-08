@@ -32,13 +32,13 @@ set, zset, list 也可以类似上述做法. 但有些不适合的场景, 比如
 
 使用 bitmap 或者布隆过滤器的场景, 往往是数据量极大的情况, 在这种情况下, bitmap 和布隆过滤器使用空间也就比较大, 比如用于公司 userId 匹配的布隆过滤器, 就需要 512 MB 的大小, 这对 Redis 来说绝对是大 value 了
 
-![](./picture/02/image-01.png)
+![](image-01.png)
 
 在这种场景下, 就需要对其进行拆分, 拆分为足够小的 bitmap, 比如将 512 MB 的大 bitmap 拆分为 1024 个 512 KB 的 bitmap. 不过拆分的时候需要注意, 要将每个值落在一个 bitmap 上. 有些业务只是把 bitmap 拆开, 但还是当做一个整体的 bitmap 来看, 所以一个 key 还是落在多个 bitmap 上, 这样就有可能导致一个 key 请求需要查询多个节点, 多个 bitmap. 如下图, 被请求的值被 hash 到多个 bitmap 上, 也就是 redis 的多个 key 上, 这些 key 还有可能在不同的节点上, 这样拆分显然**大大降低了查询的效率**.
 
 因此我们所要做的是吧所有拆分后的 bitmap 当做独立的 bitmap, 然后**通过不同的 hash 将不同的 key 分配给不同的 bitmap 上, 而不是把所有的小 bitmap 当做一个整体**. 这样做后每次请求都只需要去 Redis 中一个 key 即可.
 
-![](./picture/02/image-02.png)
+![](image-02.png)
 
 ## 4. Bloomfilter 拆分问题
 
