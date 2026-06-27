@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.0.46
+    container_name: infra-mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?need MYSQL_ROOT_PASSWORD in .env}
+      - TZ=${TZ:-Asia/Shanghai}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    ports:
+      - "0.0.0.0:3306:3306"
+    volumes:
+      - ${SERVER_ROOT:?need SERVER_ROOT in .env}/infra/mysql/data:/var/lib/mysql
+      - ${SERVER_ROOT}/infra/mysql/conf:/etc/mysql/conf.d
+      - ${SERVER_ROOT}/infra/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - infra-net
+
+  redis:
+    image: redis:7.4.9-alpine
+    container_name: infra-redis
+    restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?need REDIS_PASSWORD in .env}", "--appendonly", "yes"]
+    ports:
+      - "0.0.0.0:6379:6379"
+    volumes:
+      - ${SERVER_ROOT:?need SERVER_ROOT in .env}/infra/redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - infra-net
+
+networks:
+  infra-net:
+    external: true

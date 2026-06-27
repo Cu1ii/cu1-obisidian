@@ -1,0 +1,49 @@
+# CAT 官方镜像 meituaninc/cat:3.0.1
+# 参考：https://github.com/dianping/cat/tree/master/docker
+#
+# 注意：官方镜像内置 mysql-connector-java 5.1.20，与 MySQL 8 不兼容
+#      （c3p0 报 CannotAcquireResourceException，真因被吞）。
+#      本配置通过 Dockerfile 替换为 mysql-connector-j 8.0.33。
+#
+# 启动前需：
+#   1. 准备 client.xml         → ${SERVER_ROOT}/infra/cat/conf/client.xml
+#   2. 准备 datasources.xml    → ${SERVER_ROOT}/infra/cat/conf/datasources.xml
+#      （覆盖镜像内 entrypoint 之 sed 渲染产物，便于调 connection-timeout / SSL 等）
+#   3. 准备 Dockerfile         → ${SERVER_ROOT}/compose/cat.Dockerfile
+#   4. 下载 driver jar         → ${SERVER_ROOT}/compose/mysql-connector-j-8.0.33.jar
+#      curl -L -o mysql-connector-j-8.0.33.jar \
+#        https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.0.33/mysql-connector-j-8.0.33.jar
+#   5. 初始化 SQL（仓库 script/Cat.sql）导入 MySQL（参考 Phase 9）
+#   6. docker compose -f cat.yml build cat && docker compose -f cat.yml up -d cat
+
+services:
+  cat:
+    build:
+      context: .
+      dockerfile: cat.Dockerfile
+    image: infra-cat:3.0.1-mysql8
+    container_name: infra-cat
+    restart: always
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+      - MYSQL_URL=${CAT_MYSQL_HOST:-infra-mysql}
+      - MYSQL_PORT=${CAT_MYSQL_PORT:-3306}
+      - MYSQL_USERNAME=${CAT_MYSQL_USER:-root}
+      - MYSQL_PASSWD=${MYSQL_ROOT_PASSWORD:?need MYSQL_ROOT_PASSWORD in .env}
+      - MYSQL_SCHEMA=${CAT_MYSQL_SCHEMA:-cat}
+      - SERVER_IP=${CAT_SERVER_IP:?need CAT_SERVER_IP in .env (LAN IP of CAT host)}
+    volumes:
+      - ${SERVER_ROOT:?need SERVER_ROOT in .env}/infra/cat/conf/client.xml:/data/appdatas/cat/client.xml
+      - ${SERVER_ROOT}/infra/cat/conf/datasources.xml:/data/appdatas/cat/datasources.xml
+      - ${SERVER_ROOT}/infra/cat/logs:/data/applogs/cat
+    command: /bin/sh -c 'ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2 2>/dev/null; catalina.sh run'
+    ports:
+      - "0.0.0.0:2281:8080"
+      - "0.0.0.0:2280:2280"
+    networks:
+      infra-net:
+        ipv4_address: ${CAT_CONTAINER_IP:?need CAT_CONTAINER_IP in .env (static IP on infra-net, e.g. 192.168.97.10)}
+
+networks:
+  infra-net:
+    external: true

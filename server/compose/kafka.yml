@@ -1,0 +1,39 @@
+services:
+  kafka:
+    image: apache/kafka:4.3.0
+    container_name: infra-kafka
+    restart: always
+    environment:
+      # KRaft 单节点：同时担任 broker + controller
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - CLUSTER_ID=fyj-local-kafka-cluster-id
+      # 三 listener：内部容器互通 / controller 选举 / 宿主访问
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://infra-kafka:9092,EXTERNAL://${KAFKA_ADVERTISED_HOST:?need KAFKA_ADVERTISED_HOST in .env}:9094
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # 单节点必备：副本因子全置 1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+      - TZ=${TZ:-Asia/Shanghai}
+    ports:
+      - "0.0.0.0:9094:9094"
+    volumes:
+      - ${SERVER_ROOT:?need SERVER_ROOT in .env}/infra/kafka:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    networks:
+      - infra-net
+
+networks:
+  infra-net:
+    external: true

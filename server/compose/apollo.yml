@@ -1,0 +1,64 @@
+services:
+  apollo-configservice:
+    image: apolloconfig/apollo-configservice:2.5.1
+    container_name: infra-apollo-config
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://infra-mysql:3306/ApolloConfigDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?need MYSQL_ROOT_PASSWORD in .env}
+      - TZ=${TZ:-Asia/Shanghai}
+    ports:
+      - "0.0.0.0:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    networks:
+      - infra-net
+
+  apollo-adminservice:
+    image: apolloconfig/apollo-adminservice:2.5.1
+    container_name: infra-apollo-admin
+    restart: always
+    depends_on:
+      apollo-configservice:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://infra-mysql:3306/ApolloConfigDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?need MYSQL_ROOT_PASSWORD in .env}
+      - TZ=${TZ:-Asia/Shanghai}
+    ports:
+      - "0.0.0.0:8090:8090"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8090/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    networks:
+      - infra-net
+
+  apollo-portal:
+    image: apolloconfig/apollo-portal:2.5.1
+    container_name: infra-apollo-portal
+    restart: always
+    depends_on:
+      apollo-adminservice:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://infra-mysql:3306/ApolloPortalDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:?need MYSQL_ROOT_PASSWORD in .env}
+      - APOLLO_PORTAL_ENVS=dev
+      - DEV_META=http://infra-apollo-config:8080
+      - TZ=${TZ:-Asia/Shanghai}
+    ports:
+      - "0.0.0.0:8070:8070"
+    networks:
+      - infra-net
+
+networks:
+  infra-net:
+    external: true
