@@ -2,59 +2,7 @@
 
 ## 高层架构
 
-```
-   业务应用 (Java/C/Go/Node/Python)
-       │  CAT Client SDK
-       │  TCP (Netty)  port 2280
-       ▼
-┌──────────────────────────────────────────────┐
-│  CAT Server (cat-home jar，单进程)            │
-│                                              │
-│  ┌──────────────┐   ┌──────────────────────┐│
-│  │TcpSocketReceiver│→ │ MessageHandler       ││
-│  │(Netty Server)│   │ → DefaultMessageQueue ││
-│  └──────────────┘   │ → RealtimeConsumer    ││
-│                     │   ↓ PeriodManager      ││
-│                     │   ↓ Period (60min)     ││
-│                     │   ↓ distribute(tree)   ││
-│                     │   各 Analyzer 并行消费 ││
-│                     └──────────────────────┘ │
-│                              │                │
-│  ┌────────────────────────┐  │                │
-│  │ Analyzer 列表           │←─┘               │
-│  │  TransactionAnalyzer    │                  │
-│  │  EventAnalyzer          │  内存中累积      │
-│  │  ProblemAnalyzer        │  分钟/小时报表   │
-│  │  HeartbeatAnalyzer      │                  │
-│  │  CrossAnalyzer          │                  │
-│  │  DependencyAnalyzer     │                  │
-│  │  StateAnalyzer          │                  │
-│  │  StorageAnalyzer        │                  │
-│  │  MatrixAnalyzer         │                  │
-│  │  TopAnalyzer            │                  │
-│  │  DumpAnalyzer (logview) │  → HDFS / local  │
-│  │  BusinessAnalyzer       │                  │
-│  └────────────────────────┘                   │
-│           │ 周期到期触发                       │
-│           ▼                                    │
-│  ┌────────────────────────┐                   │
-│  │ TaskConsumer            │                   │
-│  │  (DefaultTaskConsumer) │                   │
-│  │  → 小时/日/周/月报构建   │                   │
-│  │  → 写 MySQL Binary 报表  │                   │
-│  └────────────────────────┘                   │
-│           │                                    │
-│  ┌────────────────────────┐                   │
-│  │ AlarmManager            │                   │
-│  │  → 各类 RuleAlertor      │                   │
-│  │  → AlertManager.send()  │                   │
-│  │  → Mail/SMS/WX/DX channel│                  │
-│  └────────────────────────┘                   │
-└──────────────────────────────────────────────┘
-       │                          │
-       ▼                          ▼
-   MySQL (报表元数据 + binary 内容)   HDFS (logview)
-```
+![CAT 架构与数据流无交叉简化图](assets/cat-architecture-clean-flow.svg)
 
 ## 数据流详解
 

@@ -17,15 +17,7 @@ CAT 顶层 Maven 模块（`pom.xml` 中 `<modules>`）：
 
 由 `org.unidal.initialization.Module` 编排：
 
-```
-CatClientModule  (lib/java，新版客户端)
-   ↓
-CatCoreModule
-   ↓
-CatConsumerModule  →  CatHadoopModule
-                   ↓
-              CatHomeModule (web 入口)
-```
+![CAT 模块启动顺序流程图](assets/cat-module-startup-order.svg)
 
 `cat-home/CatHomeModule.java`：
 - `setup()`：启动 `TcpSocketReceiver`（Netty 2280 端口）

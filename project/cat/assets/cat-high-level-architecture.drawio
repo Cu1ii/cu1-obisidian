@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="CAT high-level architecture">
+    <mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1160" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="CAT 高层架构与数据流（简化版）" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="360" y="30" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="业务应用&#xa;Java / C / Go / Node / Python" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="CAT Server（cat-home 单进程）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=16;verticalAlign=top;spacingTop=12;" vertex="1" parent="1">
+          <mxGeometry x="310" y="90" width="800" height="460" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="TcpSocketReceiver&#xa;Netty :2280" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="350" y="150" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="MessageHandler&#xa;+ DefaultMessageQueue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="570" y="150" width="190" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="RealtimeConsumer&#xa;PeriodManager / Period(60min)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="810" y="150" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Analyzer 并行消费&#xa;• Transaction / Event / Problem / Heartbeat&#xa;• Cross / Dependency / State / Storage&#xa;• Matrix / Top / Business&#xa;• DumpAnalyzer：LogView 明细" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#333333;fontSize=13;align=left;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="520" y="300" width="360" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="TaskConsumer&#xa;离线聚合：小时 / 日 / 周 / 月报" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="360" y="470" width="250" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="AlarmManager&#xa;RuleAlertor → AlertManager.send()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="760" y="470" width="270" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="MySQL&#xa;报表元数据 + binary 内容" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="350" y="620" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="HDFS / local&#xa;LogView bucket" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="650" y="620" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="告警渠道&#xa;Mail / SMS / WX / DX" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="930" y="625" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="主链路：上报 → 解码入队 → 按小时周期分发 → Analyzer 内存聚合&#xa;分支链路只保留落库、LogView、告警三类输出，减少交叉线。" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="630" width="260" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="CAT Client SDK&#xa;TCP 2280" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1f77b4;strokeWidth=2.5;fontColor=#1f77b4;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="decode" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1f77b4;strokeWidth=2.5;fontColor=#1f77b4;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="consume(tree)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1f77b4;strokeWidth=2.5;fontColor=#1f77b4;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="distribute(tree)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;strokeColor=#1f77b4;strokeWidth=2.5;fontColor=#1f77b4;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="checkpoint / 聚合任务" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#666666;strokeWidth=2;dashed=1;fontColor=#666666;" edge="1" parent="1" source="8" target="9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="binary 报表" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#666666;strokeWidth=2;dashed=1;fontColor=#666666;" edge="1" parent="1" source="9" target="11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="26" value="LogView 明细" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#666666;strokeWidth=2;dashed=1;fontColor=#666666;" edge="1" parent="1" source="8" target="12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="27" value="规则触发" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;fontColor=#b85450;" edge="1" parent="1" source="8" target="10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="send" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;fontColor=#b85450;" edge="1" parent="1" source="10" target="13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

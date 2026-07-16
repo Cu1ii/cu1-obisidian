@@ -12,19 +12,19 @@
 
 - [x] 能够解释 Spring Modulith 解决的问题：在单体应用内部显式建模模块边界，而不是直接拆微服务
 - [x] 能够根据业务能力划分应用模块，并判断哪些包应该成为模块 API，哪些包应该保持内部实现
-- [ ] 能够区分简单模块、进阶模块、嵌套模块、开放模块四种建模方式的适用场景
+- [x] 能够区分简单模块、进阶模块、嵌套模块、开放模块四种建模方式的适用场景
 
 ### 结构约束与依赖治理
 
 - [x] 能够使用 `ApplicationModules.of(...)` 生成应用模块模型，并用 `verify()` 验证模块依赖是否违规
-- [ ] 能够使用 `@ApplicationModule(allowedDependencies = ...)` 明确声明允许依赖的模块
-- [ ] 能够使用 `@NamedInterface` 暴露模块的特定接口面，避免其他模块依赖内部包
+- [x] 能够使用 `@ApplicationModule(allowedDependencies = ...)` 明确声明允许依赖的模块
+- [x] 能够使用 `@NamedInterface` 暴露模块的特定接口面，避免其他模块依赖内部包
 
 ### 模块间协作与事件解耦
 
-- [ ] 能够判断什么时候应该用直接方法调用，什么时候应该用应用事件解耦模块协作
-- [ ] 能够使用 `@ApplicationModuleListener` 编写事务边界清晰的模块事件监听器
-- [ ] 能够解释事件发布登记表（Event Publication Registry）如何提升异步事件处理可靠性
+- [x] 能够判断什么时候应该用直接方法调用，什么时候应该用应用事件解耦模块协作
+- [x] 能够使用 `@ApplicationModuleListener` 编写事务边界清晰的模块事件监听器
+- [x] 能够解释事件发布登记表（Event Publication Registry）如何提升异步事件处理可靠性
 
 ### 测试、文档化与重构落地
 
@@ -45,3 +45,5 @@
 | 文档 | 覆盖掌握项 | 生成日期 |
 |------|-----------|---------|
 | [[note/Java/Spring Modulith/01.md\|01.md]] | Spring Modulith 定位；模块边界识别；`ApplicationModules.of(...).verify()` 入门 | 2026-06-23 |
+| [[note/Java/Spring Modulith/02.md\|02.md]] | 四种模块建模方式；`allowedDependencies` 依赖白名单；`@NamedInterface` 命名接口面 | 2026-07-03 |
+| [[note/Java/Spring Modulith/03.md\|03.md]] | 直接调用与事件协作的判断；`@ApplicationModuleListener`；事件发布登记表与 MyBatis/JDBC 落地 | 2026-07-05 |
