@@ -40,7 +40,7 @@
       "safeMode": "workspace-write",
       "cliPath": "",
       "cliPathsByHost": {},
-      "customModels": "",
+      "customModels": "gpt-5.6-luna",
       "reasoningSummary": "detailed",
       "environmentVariables": "",
       "environmentHash": "",
@@ -64,7 +64,7 @@
   "settingsProvider": "claude",
   "savedProviderModel": {
     "claude": "opus",
-    "codex": "gpt-5.5"
+    "codex": "gpt-5.6-luna"
   },
   "savedProviderEffort": {
     "claude": "high",
@@ -82,7 +82,7 @@
     "codex": "yolo"
   },
   "lastCustomModel": "",
-  "maxTabs": 3,
+  "maxTabs": 5,
   "tabBarPosition": "input",
   "enableAutoScroll": true,
   "deferMathRenderingDuringStreaming": true,
