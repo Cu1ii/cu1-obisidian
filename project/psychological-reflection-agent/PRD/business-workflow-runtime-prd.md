@@ -14,9 +14,9 @@ depends_on:
 
 运行时不属于 Agent 基座。基座只负责模型交互与 User 级通用状态；运行时负责流程和 Skill 的执行机制；领域流程扩展包提供心理、学习或其他领域的流程定义、规则和扩展实现。
 
-![业务流程运行时软件架构图](business-workflow-runtime-architecture-v2.svg)
+![业务流程运行时软件架构图](assets/business-workflow-runtime-architecture-v2.svg)
 
-[查看和编辑架构图源文件](business-workflow-runtime-architecture-v2.drawio)
+[查看和编辑架构图源文件](assets/business-workflow-runtime-architecture-v2.drawio)
 
 第一版不支持跨领域流程组合、跨领域 Skill 自动共享或用户自行创建流程。每个领域流程默认只使用其所属命名空间中的已发布制品。
 
@@ -38,9 +38,13 @@ WorkflowDefinition 是可发布、可版本化的领域流程定义，至少包�
 
 流程定义由领域流程扩展包编写并发布到运行时。运行时保存定义制品、校验结构完整性，并以已发布版本创建流程实例。
 
+#### DSL 与发布
+
 WorkflowDefinition 是运行时保存的、可发布的 DSL 流程版本，不包含节点的具体实现代码。领域扩展包向运行时注册可用的原子节点；DSL 通过节点标识引用这些节点，并定义节点顺序、条件分支、起止状态和节点参数。
 
 运行时在发布 WorkflowDefinition 前校验 DSL：节点必须已注册，输入输出必须匹配，连线和起止状态必须完整，节点必须属于允许的领域命名空间。发布后生成不可变版本；新实例使用新版本，已有实例继续使用其创建时绑定的版本。
+
+#### ReAct 执行与恢复
 
 ReAct 是节点内部的一种执行策略，不作为单独的业务节点写入 DSL。DSL 只编排“进入剖析”“ReAct 探索”“阶段性总结”等稳定业务节点；ReAct 节点内部在轮数、超时和 Token 上限约束下循环调用模型，根据模型请求按当前节点允许的范围加载 Skill，并在获得最终结果后触发 DSL 中声明的业务事件。循环中间状态只存在于本次节点调用中，运行时记录最终结果、调用轨迹及实际使用的 Prompt／Skill 版本。
 
@@ -53,8 +57,7 @@ ReAct 节点是可重试的原子执行单元。中断恢复时，运行时从�
 SkillDefinition 是由运行时统一管理的 Skill 制品，至少包含：
 
 - `skill_id`、所属领域流程、版本和发布状态。
-
-- `skill_id`、所属领域流程、版本和发布状态。Skill 独立于 WorkflowDefinition，归属领域命名空间，由 DSL 节点单向引用；SkillDefinition 不维护所属流程或适用节点的反向关系。
+- Skill 独立于 WorkflowDefinition，归属领域命名空间，由 DSL 节点单向引用。SkillDefinition 不维护所属流程或适用节点的反向关系。
 - 用于模型选择的 description。
 - 按需加载的 Skill 内容。
 - 允许使用的上下文类别和输出结构要求。
@@ -69,7 +72,9 @@ PromptDefinition 是由运行时统一管理、版本化发布的模型指令制
 - Prompt 内容、受控变量声明。
 - 可使用的上下文类别和输出结构要求。
 
-PromptDefinition 定义模型在节点内的任务指令、行为边界、受控变量和输出格式。它与 SkillDefinition 分别管理：Prompt 在节点调用时固定携带，Skill 由模型按需请求加载；节点负责状态转换、权限校验、Skill 范围和业务动作。
+PromptDefinition 定义模型在节点内的任务指令、行为边界、受控变量和输出格式。
+
+PromptDefinition 与 SkillDefinition 分别管理：Prompt 在节点调用时固定携带，Skill 由模型按需请求加载。节点负责状态转换、权限校验、Skill 范围和业务动作。
 
 运行时只用本次已授权的上下文解析受控变量。Prompt 内容不得直接包含任何 User 对话、记忆或领域业务结果正文。
 
@@ -82,13 +87,29 @@ WorkflowExecution 是某个 User 在一个会话中运行某个 WorkflowDefiniti
 - 已向模型提供、被请求和实际加载的 Skill 及其版本。
 - 关联的模型调用标识和业务结果引用。
 
+#### 执行状态与领域结果
+
 运行时只管理流程执行状态和执行轨迹。临时分析、阶段性总结等领域业务结果由对应的领域流程扩展包通过业务结果适配器保存和管理。
 
 WorkflowExecution 不是完整的执行节点快照，而是流程恢复所需的最小工作状态。它保存绑定的 WorkflowDefinition 版本、当前业务状态、当前节点或节点游标、等待中的用户操作，以及跨节点 handoff 和领域业务结果的引用。
 
-WorkflowExecution 同时维护持久化的 `WorkflowContext`，用于在节点之间传递经过 schema 校验的流程级工作状态。它可以包含后续节点需要的结构化字段、节点交接结果和 Session、长期记忆及领域业务结果的引用；大段正文由对应存储保存，Skill／Prompt 正文和 ReAct 临时 observation 不写入其中。DSL 节点必须声明可读写的 Context 字段，运行时校验节点输出后再合并并持久化。
+#### 流程上下文
 
-Session 的原始对话、用户资料和授权记忆由 Agent 基座持久化；运行时通过 `session_id` 和上下文引用，在节点执行时重新组装本次模型调用上下文。Skill 和 Prompt 的具体版本、上下文构成及 Token 用量记录在 ModelCallTrace 中，用于审计和恢复后的预算计算，不作为流程实例的固定内容。ReAct 节点中断后，从当前节点入口重新执行。
+WorkflowExecution 同时维护持久化的 `WorkflowContext`，用于在节点之间传递经过 schema 校验的流程级工作状态。
+
+WorkflowContext 可以包含：
+
+- 后续节点需要的结构化字段。
+- 节点交接结果。
+- Session、长期记忆及领域业务结果的引用。
+
+大段正文由对应存储保存；Skill／Prompt 正文和 ReAct 临时 observation 不写入 WorkflowContext。DSL 节点必须声明可读写的 Context 字段，运行时校验节点输出后再合并并持久化。
+
+#### 模型调用记录
+
+Session 的原始对话、用户资料和授权记忆由 Agent 基座持久化。运行时通过 `session_id` 和上下文引用，在节点执行时重新组装本次模型调用上下文。
+
+Skill 和 Prompt 的具体版本、上下文构成及 Token 用量记录在 ModelCallTrace 中，用于审计和恢复后的预算计算，不作为流程实例的固定内容。ReAct 节点中断后，从当前节点入口重新执行。
 
 ## 3. 流程执行
 
@@ -132,17 +153,29 @@ ReAct 是当前节点内部的执行策略。每个节点独立声明可用 Skil
 
 扩展点必须声明输入、输出、可访问的数据范围和失败行为。领域扩展点不得直接调用模型供应商；需要模型交互时，必须回到运行时并由其经 Agent 基座执行。
 
-领域扩展包向运行时注册可调用节点。WorkflowDefinition 是完整、版本化的 DSL 配置，通过节点标识引用已注册节点，并定义节点顺序、参数、条件分支、起止状态和 Skill 引用。节点不单独维护版本字段；节点行为变更时，领域扩展包复制并注册新的节点标识，例如从 `psychological.risk-check-v1` 变为 `psychological.risk-check-v2`，再由新的 WorkflowDefinition 版本引用。运行时在发布时校验节点存在、领域命名空间一致，以及节点输入输出与连线匹配。
+领域扩展包向运行时注册可调用节点。节点不单独维护版本字段；节点行为变更时，领域扩展包复制并注册新的节点标识，例如从 `psychological.risk-check-v1` 变为 `psychological.risk-check-v2`。
+
+WorkflowDefinition 是完整、版本化的 DSL 配置，通过节点标识引用已注册节点，并定义节点顺序、参数、条件分支、起止状态和 Skill 引用。新的 WorkflowDefinition 版本引用新的节点标识。运行时在发布时校验节点存在、领域命名空间一致，以及节点输入输出与连线匹配。
 
 ## 5. 制品生命周期与隔离
+
+### 5.1 发布与隔离
 
 - WorkflowDefinition、SkillDefinition 和 PromptDefinition 的草稿、已发布、已停用状态由运行时统一管理。
 - 已发布版本不可原地修改；修改后产生新版本。正在执行的 WorkflowExecution 继续使用其创建时的已发布版本。
 - 每个定义和 Skill 均关联所属领域流程；默认不允许其他领域流程查询或加载。
+
+### 5.2 Skill 绑定与停用
+
 - 停用 Skill 后，运行时不得为新流程实例建立包含该版本的新绑定；已经绑定该版本的运行中实例仍可继续使用，包括节点重试和恢复。
 
-流程实例创建前，运行时根据已发布的 WorkflowDefinition 解析所有节点引用的 Skill，并校验 Skill 版本仍可用。校验通过后，流程实例绑定具体的 Skill ID 和版本。运行时不得向已有实例追加新的 Skill 绑定；模型动态请求也只能加载实例绑定清单中的 Skill。Skill 停用只阻止新流程实例建立包含该版本的新绑定。若新实例在创建前校验失败，则不得启动，或执行 WorkflowDefinition 预先声明的入口降级路径。
-- 运行时保存的 Skill 内容属于系统配置，不得包含任何 User 对话、记忆或业务结果正文。
+流程实例创建前，运行时根据已发布的 WorkflowDefinition 解析所有节点引用的 Skill，并校验 Skill 版本仍可用。校验通过后，流程实例绑定具体的 Skill ID 和版本。
+
+运行时不得向已有实例追加新的 Skill 绑定；模型动态请求也只能加载实例绑定清单中的 Skill。Skill 停用只阻止新流程实例建立包含该版本的新绑定。若新实例在创建前校验失败，则不得启动，或执行 WorkflowDefinition 预先声明的入口降级路径。
+
+### 5.3 配置内容边界
+
+运行时保存的 Skill 内容属于系统配置，不得包含任何 User 对话、记忆或业务结果正文。
 
 ## 6. 观测与监控
 
@@ -153,7 +186,9 @@ ReAct 是当前节点内部的执行策略。每个节点独立声明可用 Skil
 - 每次调用提供的 Skill、模型请求的 Skill、实际加载的 Skill，以及拒绝或失败原因。
 - 关联的模型调用标识、结果状态和领域输出校验结果。
 
-运行时不记录用户对话、模型回复、长期记忆、Skill 运行时上下文或领域业务结果正文。领域流程扩展包基于这些元数据监控应触发而未触发、输出校验失败和用户否定等业务质量问题；Agent 基座仅监控其自身调用、会话和记忆能力的运行状况。
+运行时不记录用户对话、模型回复、长期记忆、Skill 运行时上下文或领域业务结果正文。
+
+领域流程扩展包基于这些元数据监控应触发而未触发、输出校验失败和用户否定等业务质量问题。Agent 基座仅监控其自身调用、会话和记忆能力的运行状况。
 
 ## 7. 与其他层的边界
 
