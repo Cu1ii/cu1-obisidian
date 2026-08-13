@@ -64,7 +64,7 @@
   "settingsProvider": "claude",
   "savedProviderModel": {
     "claude": "opus",
-    "codex": "gpt-5.6-terra"
+    "codex": "gpt-5.6-sol"
   },
   "savedProviderEffort": {
     "claude": "high",
