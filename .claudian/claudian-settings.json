@@ -40,12 +40,13 @@
       "safeMode": "workspace-write",
       "cliPath": "",
       "cliPathsByHost": {},
-      "customModels": "gpt-5.6-luna\ngpt-5.6-sol\ngpt-5.6-terra",
+      "customModels": "gpt-5.6-luna\ngpt-5.6-sol\ngpt-5.6-terra\ngrok-4.5",
       "reasoningSummary": "detailed",
       "environmentVariables": "",
       "environmentHash": "",
       "installationMethodsByHost": {
-        "bogon": "native-windows"
+        "bogon": "native-windows",
+        "fyjdeMacBook-Air.local": "native-windows"
       },
       "wslDistroOverridesByHost": {}
     },
@@ -64,7 +65,7 @@
   "settingsProvider": "claude",
   "savedProviderModel": {
     "claude": "opus",
-    "codex": "gpt-5.6-sol"
+    "codex": "gpt-5.6-terra"
   },
   "savedProviderEffort": {
     "claude": "high",
