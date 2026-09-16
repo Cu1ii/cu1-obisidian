@@ -36,7 +36,7 @@
       "environmentHash": ""
     },
     "codex": {
-      "enabled": true,
+      "enabled": false,
       "safeMode": "workspace-write",
       "cliPath": "",
       "cliPathsByHost": {},
@@ -53,34 +53,44 @@
     "opencode": {
       "cliPath": "",
       "cliPathsByHost": {},
-      "enabled": false,
+      "enabled": true,
       "environmentHash": "",
       "environmentVariables": "OPENCODE_ENABLE_EXA=1",
       "modelAliases": {},
       "preferredThinkingByModel": {},
-      "selectedMode": "",
-      "visibleModels": []
+      "selectedMode": "claudian-yolo",
+      "visibleModels": [
+        "suixiang/grok-4.6",
+        "suixiang/grok-4.5",
+        "suixiang/gpt-5.6-sol",
+        "suixiang/gpt-5.6-terra",
+        "suixiang/kimi-for-coding"
+      ]
     }
   },
   "settingsProvider": "claude",
   "savedProviderModel": {
     "claude": "opus",
-    "codex": "gpt-5.6-terra"
+    "codex": "grok-4.5",
+    "opencode": "opencode:suixiang/grok-4.6"
   },
   "savedProviderEffort": {
     "claude": "high",
-    "codex": "high"
+    "codex": "high",
+    "opencode": "default"
   },
   "savedProviderServiceTier": {
     "codex": "default"
   },
   "savedProviderThinkingBudget": {
     "claude": "medium",
-    "codex": "medium"
+    "codex": "medium",
+    "opencode": "medium"
   },
   "savedProviderPermissionMode": {
     "claude": "yolo",
-    "codex": "yolo"
+    "codex": "yolo",
+    "opencode": "yolo"
   },
   "lastCustomModel": "",
   "maxTabs": 5,

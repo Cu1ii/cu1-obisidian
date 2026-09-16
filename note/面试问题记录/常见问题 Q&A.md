@@ -168,7 +168,7 @@ sequenceDiagram
 参考：[Spring使用三级缓存解决循环依赖](https://juejin.cn/post/6844904099976536072)
 ### Q3：可重入锁相关实现
 
-参考：[从 ReentrantLock 的实现看 AQS 的原理及应用](https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html)
+参考：[从 ReentrantLock 的实现看 AQS 的原理及应用]([从ReentrantLock的实现看AQS的原理及应用 \| JavaGuide](https://javaguide.cn/java/concurrent/reentrantlock.html#_2-aqs))
 ### Q4：怎么区分 JDK 线程池里的核心线程和非核心线程
 
 不区分核心线程和非核心线程，仅在线程每次获取任务前判断是否超出核心线程数，超出且超过线程存活时间后会自行结束。

@@ -716,14 +716,14 @@ CMF Serial Old → ConcurrentMarkSweep count +1, time + 30s   (全部 STW)
 
 #### 实际监控建议
 
-| 你想监控什么 | 该用什么方式 |
-|-------------|------------|
+| 你想监控什么             | 该用什么方式                                                                    |
+| ------------------ | ------------------------------------------------------------------------- |
 | **Young GC 频率/耗时** | `jvm_gc_collection_seconds{generation="young"}` (Prometheus JMX Exporter) |
-| **Old GC 触发频率** | `jvm_gc_collection_seconds_count{generation="old"}` |
-| **CMS 真正 STW 时间** | GC 日志初始标记 + 重新标记的暂停时间，或 `-XX:+PrintGCApplicationStoppedTime` |
-| **有没有发生 CMF** | GC 日志中搜索 `concurrent mode failure`——**这是唯一可靠的方式** |
-| **Full GC 频率** | GC 日志搜索 `[Full GC`，不要依赖 JMX |
-| **老年代占用趋势** | JMX `MemoryPoolMXBean` 的 `Tenured Gen` 使用率 |
+| **Old GC 触发频率**    | `jvm_gc_collection_seconds_count{generation="old"}`                       |
+| **CMS 真正 STW 时间**  | GC 日志初始标记 + 重新标记的暂停时间，或 `-XX:+PrintGCApplicationStoppedTime`              |
+| **有没有发生 CMF**      | GC 日志中搜索 `concurrent mode failure`——**这是唯一可靠的方式**                         |
+| **Full GC 频率**     | GC 日志搜索 `[Full GC`，不要依赖 JMX                                               |
+| **老年代占用趋势**        | JMX `MemoryPoolMXBean` 的 `Tenured Gen` 使用率                                |
 
 > **一句话总结**：监控 CMS 时，JMX 的 `ConcurrentMarkSweep` 耗时曲线**不可信**（混入了并发时间），Full GC 被隐藏在同一个指标里（和正常 CMS 周期无法区分）。真正的答案在 GC 日志里。
 
