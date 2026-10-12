@@ -46,7 +46,8 @@
       "environmentHash": "",
       "installationMethodsByHost": {
         "bogon": "native-windows",
-        "fyjdeMacBook-Air.local": "native-windows"
+        "fyjdeMacBook-Air.local": "native-windows",
+        "192.168.0.107": "native-windows"
       },
       "wslDistroOverridesByHost": {}
     },
@@ -72,7 +73,7 @@
   "savedProviderModel": {
     "claude": "opus",
     "codex": "grok-4.5",
-    "opencode": "opencode:suixiang/grok-4.6"
+    "opencode": "opencode:suixiang/gpt-5.6-sol"
   },
   "savedProviderEffort": {
     "claude": "high",
