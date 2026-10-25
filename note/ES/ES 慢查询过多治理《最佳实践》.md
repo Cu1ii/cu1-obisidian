@@ -9,8 +9,8 @@ created: 2026-07-13
 ---
 ## 一、业务查询逻辑
 
-1. **terms 查询非 keyword 字段类型**，建议使用 multi-fields，增加 keyword 类型查，或者重建索引，字段类型改为 keyword，线上大部分慢查询都是因为这个问题导致的。
-2. **terms size 过大**，会严重影响查询效率，建议 terms 大小控制在 1000 以内，超过 1k 的，需要更大集群规模来满足查询容量，容量不足会严重影响 CPU 负载，甚至是查挂集群。
+1. **terms 查询非 keyword 字段类型**，建议使用 multi-fields，增加 keyword 类型查，或者重建索引，字段类型改为 keyword，线上大部分慢查询都是因为这个问题导致的。[[note/ES/注释#terms 查询与字段类型|¹]] ^terms-field-type
+2. **terms size 过大**，会严重影响查询效率，建议 terms 大小控制在 1000 以内，超过 1k 的，需要更大集群规模来满足查询容量，容量不足会严重影响 CPU 负载，甚至是查挂集群。[[note/ES/注释#terms size 过大为什么影响查询效率|³]] ^terms-size
 3. **wildcard 通配符、fuzzy 模糊、reg 正则、prefix 匹配查询**，使用分词查询代替模糊、通配符查询。
 4. **深页查询**，`from + size` 过大，并且配置了 `max_result_window`。
 5. **多层聚合查询**，聚合查询 size 越大性能越差。
@@ -105,7 +105,7 @@ created: 2026-07-13
 }
 ```
 
-索引字段一旦创建，便无法修改（详细原因：[[ES 索引字段及主分片数修改]]），需要重建索引（业务不用改代码），或字段通过 multi-fields 增加新字段方式处理（需业务改代码，如新字段是 `channels.keyword`，查询字段也要改成 `channels.keyword`），详细用法参考：[[ES multi-field 最佳实践]]。
+索引字段一旦创建，便无法修改（详细原因：[[ES 索引字段及主分片数修改]]），需要重建索引（业务不用改代码），或字段通过 multi-fields 增加新字段方式处理（需业务改代码，如新字段是 `channels.keyword`，查询字段也要改成 `channels.keyword`），详细用法参考：[[ES multi-field 最佳实践]]。[[note/ES/注释#multi-fields 与 keyword 子字段|²]] ^multi-fields-keyword
 
 ### 场景二：索引 nested 结构，平台打开索引页面慢
 
@@ -341,3 +341,9 @@ terms 查询的索引文档数量越多，涉及到的倒排索引匹配的次�
   }
 }
 ```
+
+## 注释与出处
+
+1. [[note/ES/注释#terms 查询与字段类型|为什么 keyword 的精确查询可能更快]]。出处：[Elastic：Mapping numeric identifiers](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/number#mapping-numeric-identifiers)。
+2. [[note/ES/注释#multi-fields 与 keyword 子字段|multi-fields 与 keyword 子字段：命名与索引方式]]。出处：[Elastic：Multi-fields](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/multi-fields)。
+3. [[note/ES/注释#terms size 过大为什么影响查询效率|terms size 过大：查找、合并及分片并发开销，1,000 并非通用阈值]]。出处：[Elastic：Terms query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-terms-query)、[Lucene：TermInSetQuery](https://github.com/apache/lucene/blob/main/lucene/core/src/java/org/apache/lucene/search/TermInSetQuery.java)、[Elastic：Search concurrency and parallelism](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-shard-routing#search-concurrency-and-parallelism)。
