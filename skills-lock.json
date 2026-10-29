@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "reconnect-with-someone": {
+      "source": "../cu1-agent-configs/skills",
+      "sourceType": "local",
+      "computedHash": "d218c8ee768c677452fabf849959e83992feb717d3ba673a2a403bff7656e886"
+    }
+  }
+}
